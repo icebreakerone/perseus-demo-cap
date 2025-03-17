@@ -4,7 +4,7 @@ This cli demonstrates the authentication and authorization code flow for the per
 
 ## Certificate setup
 
-You will need to generate a key pair and a certificate for the mtls connections using the UI at the ib1 directory. Visit [the members area](https://directory.core.pilot.trust.ib1.org/members/) for more informaiton. 
+You will need to generate a key pair and a certificate for the mtls connections using the UI at the ib1 directory. Visit [the members area](https://directory.core.pilot.trust.ib1.org/members/) for more information. 
 
 - Generate a certificate at the ib1 directory and download
 - Download the CA client bundle
