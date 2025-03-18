@@ -14,7 +14,7 @@ export default function LoginButton() {
 
   return (
     <button
-      className="bg-purple-500 text-white px-4 py-2 rounded-[50px] w-[7rem] hover:bg-purple-800"
+      className="w-[7rem] rounded-[50px] bg-purple-500 px-4 py-2 text-white hover:bg-purple-800"
       disabled={isLoading}
       id="portal"
       // onClick={() => setStageId('edpViaAuth')}
