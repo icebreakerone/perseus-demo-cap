@@ -39,7 +39,7 @@
     "tailwindcss": "^3.3.3",
     "typescript": "5.1.5",
     "undici": "^7.5.0",
-    "webpack": "^5.88.2",
+    "webpack": "^5.98.0",
     "zod": "^3.22.2"
   },
   "devDependencies": {
