@@ -28,7 +28,7 @@
     "negotiator": "^0.6.3",
     "next": "^15.2.2",
     "next-intl": "^3.0.0-beta.13",
-    "nodemailer": "^6.9.4",
+    "nodemailer": "^6.9.9",
     "openid-client": "^6.3.3",
     "postcss": "^8.4.27",
     "prettier-plugin-tailwindcss": "^0.5.3",
