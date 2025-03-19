@@ -153,21 +153,6 @@ export async function getClientConfig() {
   const clientConfig = await clientConfigPromise
   console.log(clientConfig)
   const customFetch = await createCustomFetch()
-  const res = await customFetch(
-    new URL(
-      '/.well-known/oauth-authorization-server',
-      clientConfig.server,
-    ).toString(),
-  )
-
-  if (!res.ok) {
-    console.error(
-      `Error fetching discovery document: ${res.status} ${res.statusText}`,
-    )
-    console.error(await res.text())
-  }
-  const json = await res.json()
-  console.log('Raw discovery document:', json)
   // Use discovery with mTLS
   const issuer = await client.discovery(
     new URL('/.well-known/oauth-authorization-server', clientConfig.server),
