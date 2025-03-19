@@ -3,14 +3,21 @@ import { cookies } from 'next/headers'
 import * as client from 'openid-client'
 import * as undici from 'undici'
 import { readFileSync } from 'fs'
+import {
+  GetSecretValueCommand,
+  SecretsManagerClient,
+} from '@aws-sdk/client-secrets-manager'
 
-export interface IClientConfig {
+interface ICertificates {
+  mtlsKey: string
+  mtlsBundle: string
+  serverCa: string
+}
+
+interface IClientConfig extends ICertificates {
   server: URL
   client_id: string
   redirect_uri: string
-  mtlsBundlePath: string
-  mtlsKeyPath: string
-  serverCaPath: string
   scope: string
   response_type: string
   grant_type: string
@@ -19,23 +26,74 @@ export interface IClientConfig {
   protectedResourceUrl: URL
 }
 
-export const clientConfig: IClientConfig = {
-  server: new URL(process.env.NEXT_PUBLIC_SERVER as string),
-  client_id: process.env.NEXT_PUBLIC_CLIENT_ID as string,
-  redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
-  mtlsBundlePath: './certs/local-development-bundle.pem',
-  mtlsKeyPath: './certs/local-development-key.pem',
-  serverCaPath: './certs/directory-server-certificates/bundle.pem',
-  scope:
-    'https://registry.core.pilot.trust.ib1.org/scheme/perseus/license/energy-consumption-data/2024-12-05+offline_access',
-  response_type: 'code',
-  grant_type: 'authorization_code',
-  post_login_route: process.env.NEXT_PUBLIC_APP_URL as string,
-  code_challenge_method: 'S256',
-  protectedResourceUrl: new URL(
-    'https://preprod.perseus-demo-energy.ib1.org/datasources/id/measure?from=2024-12-05T00:00:00Z&to=2024-12-06T00:00:00Z',
-  ),
+const env = process.env.APP_ENV || 'dev'
+const isDevelopment = env === 'dev'
+
+// Define a function to load certificates in development (local files)
+const loadCertificatesFromLocal = (): ICertificates => {
+  const mtlsKeyPath = './certs/local-development-key.pem'
+  const mtlsBundlePath = './certs/local-development-bundle.pem'
+  const serverCaPath = './certs/directory-server-certificates/bundle.pem'
+
+  return {
+    mtlsKey: readFileSync(mtlsKeyPath, 'utf8'),
+    mtlsBundle: readFileSync(mtlsBundlePath, 'utf8'),
+    serverCa: readFileSync(serverCaPath, 'utf8'),
+  }
 }
+
+// Define a function to load certificates from AWS Secrets Manager in production
+const loadCertificatesFromSecretsManager = async (): Promise<ICertificates> => {
+  const secretsManager = new SecretsManagerClient({ region: 'eu-west-2' })
+  const secretName = `${process.env.APP_ENV}/perseus-demo-cap/mtls-key-bundle`
+
+  try {
+    const command = new GetSecretValueCommand({ SecretId: secretName })
+    const data = await secretsManager.send(command)
+    const secret = data.SecretString ? JSON.parse(data.SecretString) : null
+    if (!secret)
+      throw new Error('Secret is empty or not in the expected format.')
+
+    return {
+      mtlsKey: secret.mtlsKey,
+      mtlsBundle: secret.mtlsBundle,
+      serverCa: secret.serverCa,
+    }
+  } catch (error) {
+    console.error('Error retrieving certificates from Secrets Manager:', error)
+    throw error
+  }
+}
+
+// Function to initialize clientConfig asynchronously
+export const initializeClientConfig = async (): Promise<IClientConfig> => {
+  const certificates = isDevelopment
+    ? loadCertificatesFromLocal()
+    : await loadCertificatesFromSecretsManager()
+
+  return {
+    server: new URL(process.env.NEXT_PUBLIC_SERVER as string),
+    client_id: process.env.NEXT_PUBLIC_CLIENT_ID as string,
+    redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+    mtlsKey: certificates.mtlsKey,
+    mtlsBundle: certificates.mtlsBundle,
+    serverCa: certificates.serverCa,
+    scope:
+      'https://registry.core.pilot.trust.ib1.org/scheme/perseus/license/energy-consumption-data/2024-12-05+offline_access',
+    response_type: 'code',
+    grant_type: 'authorization_code',
+    post_login_route: process.env.NEXT_PUBLIC_APP_URL as string,
+    code_challenge_method: 'S256',
+    protectedResourceUrl: new URL(
+      'https://preprod.perseus-demo-energy.ib1.org/datasources/id/measure?from=2024-12-05T00:00:00Z&to=2024-12-06T00:00:00Z',
+    ),
+  }
+}
+
+// Initialize clientConfig
+const clientConfigPromise = initializeClientConfig()
+
+// Session and fetch setup remain unchanged
 
 export interface SessionData {
   isLoggedIn: boolean
@@ -72,17 +130,14 @@ export async function getSession() {
 }
 
 // Create custom fetch with mTLS
-export function createCustomFetch() {
+export async function createCustomFetch() {
   // In server components, we can read files
-  const key = readFileSync(clientConfig.mtlsKeyPath, 'utf8')
-  const cert = readFileSync(clientConfig.mtlsBundlePath, 'utf8')
-  const ca = readFileSync(clientConfig.serverCaPath, 'utf8')
-
+  const clientConfig = await clientConfigPromise
   const agent = new undici.Agent({
     connect: {
-      key,
-      cert,
-      ca,
+      key: clientConfig.mtlsKey,
+      cert: clientConfig.mtlsBundle,
+      ca: clientConfig.serverCa,
     },
   })
 
@@ -95,8 +150,24 @@ export function createCustomFetch() {
 }
 
 export async function getClientConfig() {
-  const customFetch = createCustomFetch()
-  console.log('clientConfig.server', clientConfig.server)
+  const clientConfig = await clientConfigPromise
+  console.log(clientConfig)
+  const customFetch = await createCustomFetch()
+  const res = await customFetch(
+    new URL(
+      '/.well-known/oauth-authorization-server',
+      clientConfig.server,
+    ).toString(),
+  )
+
+  if (!res.ok) {
+    console.error(
+      `Error fetching discovery document: ${res.status} ${res.statusText}`,
+    )
+    console.error(await res.text())
+  }
+  const json = await res.json()
+  console.log('Raw discovery document:', json)
   // Use discovery with mTLS
   const issuer = await client.discovery(
     new URL('/.well-known/oauth-authorization-server', clientConfig.server),
@@ -111,7 +182,7 @@ export async function getClientConfig() {
 
 export async function generateAuthUrl(session: IronSession<SessionData>) {
   const issuer = await getClientConfig()
-
+  const clientConfig = await clientConfigPromise
   // Generate PKCE code verifier and challenge
   const code_verifier = client.randomPKCECodeVerifier()
   const code_challenge = await client.calculatePKCECodeChallenge(code_verifier)
@@ -120,7 +191,7 @@ export async function generateAuthUrl(session: IronSession<SessionData>) {
   session.code_verifier = code_verifier
 
   // Prepare PAR request
-  const customFetch = createCustomFetch()
+  const customFetch = await createCustomFetch()
   const parEndpoint =
     issuer.serverMetadata().pushed_authorization_request_endpoint
   console.log('parEndpoint', parEndpoint)

@@ -1,17 +1,17 @@
 // app/auth/callback/route.ts
 import {
-  clientConfig,
   createCustomFetch,
   getClientConfig,
   getSession,
+  initializeClientConfig,
 } from '@/lib/auth'
 import { NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest): Promise<Response> {
   const session = await getSession()
   const issuer = await getClientConfig()
-  const customFetch = createCustomFetch()
-
+  const customFetch = await createCustomFetch()
+  const clientConfig = await initializeClientConfig()
   try {
     // Get the authorization code from the URL
     const url = new URL(request.url)
