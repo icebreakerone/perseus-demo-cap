@@ -11,15 +11,20 @@ const FormCAPSelectEDP = ({ onSubmit }: IProps) => {
   return (
     <form className="flex w-full flex-col gap-8">
       <div className="flex w-full flex-col">
-        <label className="block mb-2 text-sm font-medium" htmlFor="countries">Your energy data provider</label>
+        <label className="mb-2 block text-sm font-medium" htmlFor="countries">
+          Your energy data provider
+        </label>
         <select
+          className="block w-full rounded-lg border border-gray-600 bg-gray-700 p-2.5 text-sm text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
           id="edp"
           onChange={e => setEDP(e.target.value)}
-          className="border text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500"
           required={true}
+          value={edp}
         >
-          <option selected>Select your EDP</option>
-          <option value="IB1EDP">IB1<strong>EDP</strong></option>
+          <option value="">Select your EDP</option>
+          <option className="font-bold" value="IB1EDP">
+            IB1 EDP
+          </option>
         </select>
       </div>
 
@@ -43,12 +48,11 @@ const FormCAPSelectEDP = ({ onSubmit }: IProps) => {
           className={`
             text-md
             rounded-md
-            px-4 py-2
-            bg-purple-600
-            hover:bg-purple-800
+            bg-purple-600 px-4
+            py-2
             text-white
-            disabled:border disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500`
-          }
+            hover:bg-purple-800
+            disabled:border disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500`}
           disabled={!edp}
           onClick={onSubmit}
         >
