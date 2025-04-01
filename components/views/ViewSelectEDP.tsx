@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React from 'react'
 
 import ErrorBoundary from '@/app/error'
 import Link from 'next/link'

@@ -2,7 +2,7 @@
 import React from 'react'
 
 interface IProps {
-  onSubmit: (e: any) => void
+  onSubmit: (e: never) => void
 }
 
 const FormCAPSelectLender = ({ onSubmit }: IProps) => {
@@ -22,7 +22,7 @@ const FormCAPSelectLender = ({ onSubmit }: IProps) => {
         >
           <option selected>Select your lender</option>
           <option value="IB1Bank">
-            IB1 <strong>Bank</strong>
+            IB1<strong>Bank</strong>
           </option>
         </select>
       </div>

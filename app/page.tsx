@@ -7,7 +7,7 @@ import ErrorBoundary from '@/app/error'
 
 import FormCAPLogin from '@components/forms/FormCAPLogin'
 import FormCAPSelectEDP from '@components/forms/FormCAPSelectEDP'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import FormEDPLogin from '@components/forms/FormEDPVerifyWithAuth'
 import FormEDPVerifyWithMAC from '@components/forms/FormEDPVerifyWithMAC'
 import LoginButton from '@components/LoginButton'
@@ -46,42 +46,34 @@ const Home = () => {
     if (key) {
       // if the requested stageId is part of the edp from then launch as a modal
       if (key.toLowerCase().includes('edp')) setModalId('edp')
-
       setStageId(key as TStage)
     }
   }, [])
 
-  const router = useRouter()
-
   /** CAP level */
-  const handleLoginCAP = async (e: any) => {
+  const handleLoginCAP = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     /** This is a placeholder for the actual login process.
      * */
-
     setStageId('selectEDP')
   }
 
-  const handleSelectEDP = async (e: any) => {
+  const handleSelectEDP = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setSelectedEDP(e.target.value)
-
+    setSelectedEDP((e.target as HTMLInputElement).value)
     setStageId('connectEDP')
     setModalId('edp')
   }
 
-  const handleSelectLender = async (e: any) => {
+  const handleSelectLender = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setSelectedLender(e.target.value)
-
+    setSelectedLender((e.target as HTMLInputElement).value)
     setStageId('CAPSharingConsent')
     setModalId(null)
   }
 
-  const handleConfirmShareConsent = async (e: any) => {
-    e.preventDefault()
-    setSharingConsent(e.target.value)
-
+  const handleConfirmShareConsent = async (value: boolean) => {
+    setSharingConsent(value)
     setStageId('CAPComplete')
     setModalId(null)
   }
@@ -123,17 +115,17 @@ const Home = () => {
             <div className="flex flex-col gap-4 bg-purple-900 p-4">
               {modalId === 'edp' && stageId == 'connectEDP' && (
                 <h1 className="flex-1 text-center text-2xl font-normal text-white">
-                  IB1 <strong>EDP | Options</strong>
+                  IB1 <strong>EDP</strong> | Options
                 </h1>
               )}
               {modalId === 'edp' && stageId == 'edpViaAuth' && (
                 <h1 className="flex-1 text-center text-2xl font-normal text-white">
-                  IB1<strong>EDP | Access Via Auth</strong>
+                  IB1<strong>EDP</strong> | Access Via Auth
                 </h1>
               )}
               {modalId === 'edp' && stageId == 'edpViaMac' && (
                 <h1 className="flex-1 text-center text-2xl font-normal text-white">
-                  IB1<strong>EDP | Access Via Mac</strong>
+                  IB1<strong>EDP</strong> | Access Via Mac
                 </h1>
               )}
             </div>
@@ -142,9 +134,9 @@ const Home = () => {
               {modalId === 'edp' && stageId === 'connectEDP' && (
                 <>
                   <p>
-                    IB1CAP is asking to retrieve your detailed electricity
-                    consumption data. For this, they require proof of your
-                    address.
+                    IB1<strong>CAP</strong> is asking to retrieve your detailed
+                    electricity electricity consumption data. For this, they
+                    require proof address.
                   </p>
                   <p>
                     Please click on the relevant icon below for your preferred
@@ -200,6 +192,7 @@ const Home = () => {
                   </div>
                 </>
               )}
+
               {modalId === 'edp' && stageId === 'edpViaAuth' && (
                 <>
                   <p>
@@ -216,6 +209,7 @@ const Home = () => {
                   </div>
                 </>
               )}
+
               {modalId === 'edp' && stageId === 'edpViaMac' && (
                 <>
                   <p>
@@ -232,17 +226,14 @@ const Home = () => {
                   </div>
                 </>
               )}
+
               {modalId === 'edp' && stageId === 'edpVerified' && (
                 <>
                   <p>
-                    IB1<strong>CAP</strong> is asking to retrieve your detailed
-                    electricity consumption data. For this, they require proof
-                    of your address.
+                    <strong>Good news</strong>, we have confirmed your address
+                    and allowed Sage Earth to retrieve your smart meter data.
                   </p>
-                  <p>
-                    Please click on the relevant icon below for your preferred
-                    option of authorising your smart meter:
-                  </p>
+                  <p>You may now return to Sage Earth</p>
                   <div className="flex flex-col gap-4">
                     <ViewEDPVerified
                       onClose={() => {
@@ -255,6 +246,11 @@ const Home = () => {
               )}
             </div>
           </div>
+          <span>stageId: {stageId}</span>
+          <span>modalId: {modalId}</span>
+          <span>selectedEDP: {selectedEDP}</span>
+          <span>selectedLender: {selectedLender}</span>
+          <span>sharingConsent: {sharingConsent}</span>
         </div>
       )}
     </ErrorBoundary>
