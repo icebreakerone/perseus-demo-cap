@@ -1,4 +1,3 @@
-// app/auth/callback/route.ts
 import {
   createCustomFetch,
   getClientConfig,

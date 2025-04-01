@@ -26,7 +26,7 @@ module.exports = {
   plugins: ['react'],
   rules: {
     // Possible errors
-    'no-console': 'warn',
+    'no-console': ['warn', { allow: ['error', 'info', 'log', 'warn'] }],
     // temporary to avoid build error
     '@typescript-eslint/no-unused-vars': 'warn',
     // Best practices

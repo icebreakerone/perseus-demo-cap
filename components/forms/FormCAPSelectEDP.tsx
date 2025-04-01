@@ -2,7 +2,7 @@
 import React from 'react'
 
 interface IProps {
-  onSubmit: (e: any) => void
+  onSubmit: (e: never) => void
 }
 
 const FormCAPSelectEDP = ({ onSubmit }: IProps) => {

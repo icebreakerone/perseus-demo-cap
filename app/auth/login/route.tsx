@@ -1,7 +1,6 @@
 import { generateAuthUrl, getSession } from '@lib/auth'
-import { NextRequest } from 'next/server'
 
-export async function GET(request: NextRequest): Promise<Response> {
+export async function GET(): Promise<Response> {
   const session = await getSession()
 
   try {

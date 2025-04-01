@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
-const plugin = require('tailwindcss/plugin')
+//x const plugin = require('tailwindcss/plugin')
+import plugin from 'tailwindcss/plugin'
 
 module.exports = {
   mode: 'jit',
@@ -40,7 +41,7 @@ module.exports = {
         'panel-md': '300px',
         'panel-lg': '450px',
         'fit-content': 'fit-content',
-      }
+      },
     },
   },
   variant: {},

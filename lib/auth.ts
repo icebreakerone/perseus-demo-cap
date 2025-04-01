@@ -82,7 +82,8 @@ export const initializeClientConfig = async (): Promise<IClientConfig> => {
       'https://registry.core.pilot.trust.ib1.org/scheme/perseus/license/energy-consumption-data/2024-12-05+offline_access',
     response_type: 'code',
     grant_type: 'authorization_code',
-    post_login_route: process.env.NEXT_PUBLIC_APP_URL as string,
+    // post_login_route: process.env.NEXT_PUBLIC_APP_URL as string,
+    post_login_route: process.env.NEXT_PUBLIC_REDIRECT_URL as string,
     code_challenge_method: 'S256',
     protectedResourceUrl: new URL(
       'https://preprod.perseus-demo-energy.ib1.org/datasources/id/measure?from=2024-12-05T00:00:00Z&to=2024-12-06T00:00:00Z',

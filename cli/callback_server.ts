@@ -10,9 +10,8 @@ const port = 3000
 app.get('/callback', async (req, res) => {
   const authorizationCode = req.query.code as string
 
-  if (!authorizationCode) {
+  if (!authorizationCode)
     return res.status(400).send('Missing authorization code.')
-  }
 
   // Read the code_verifier from the file
   let codeVerifier
@@ -27,7 +26,7 @@ app.get('/callback', async (req, res) => {
 
   // Discover the issuer and client metadata
   console.log(`Discovering issuer at: ${config.server.href}`)
-  let clientMetadata = { use_mtls_endpoint_aliases: true }
+  const clientMetadata = { use_mtls_endpoint_aliases: true }
 
   const issuer = await client.discovery(
     new URL('/.well-known/oauth-authorization-server', config.server),
@@ -41,11 +40,10 @@ app.get('/callback', async (req, res) => {
   // Get the token endpoint from the issuer's metadata
   const tokenEndpoint = issuer.serverMetadata().token_endpoint
 
-  if (!tokenEndpoint) {
+  if (!tokenEndpoint)
     return res
       .status(500)
       .send('Token endpoint is not available in the issuer metadata.')
-  }
 
   console.log('Token endpoint:', tokenEndpoint)
 
@@ -80,10 +78,12 @@ app.get('/callback', async (req, res) => {
     console.log('Access Token:', tokenData.access_token)
 
     // Now use the access token to fetch data from the data server
+    /*
     console.log(
       'Fetching data from data server:',
       config.protectedResourceUrl.href,
     )
+    */
     const dataResponse = await customFetch(config.protectedResourceUrl, {
       method: 'GET',
       headers: {
@@ -115,5 +115,5 @@ app.get('/callback', async (req, res) => {
 
 // Start the server
 app.listen(port, () => {
-  console.log(`Server is running on https://localhost:${port}`)
+  console.info(`Server is running on https://localhost:${port}`)
 })

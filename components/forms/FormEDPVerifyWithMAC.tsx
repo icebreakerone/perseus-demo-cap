@@ -1,9 +1,9 @@
 'use client'
 import React from 'react'
-import Link from "next/link";
+import Link from 'next/link'
 
 interface IProps {
-  onSubmit: (e: any) => void
+  onSubmit: (e: never) => void
 }
 
 const FormLoginCAP = ({ onSubmit }: IProps) => {
@@ -14,24 +14,28 @@ const FormLoginCAP = ({ onSubmit }: IProps) => {
     <form className="flex w-full flex-col gap-8">
       <div className="flex w-full flex-col gap-8">
         <input
+          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-4 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
           id="usename"
           onChange={e => setEmail(e.target.value)}
-          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-4 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
           placeholder="Enter username"
           required={true}
           type="usename"
         />
         <input
+          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-4 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
           id="password"
           onChange={e => setPassword(e.target.value)}
-          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-4 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
           placeholder="Enter password"
           required={true}
           type="password"
         />
         <div className="flex w-full flex-col gap-2">
-          <Link className="underline" href="#">Sign Up for a Portal Account</Link>
-          <Link className="underline" href="#">Reset My Password</Link>
+          <Link className="underline" href="#">
+            Sign Up for a Portal Account
+          </Link>
+          <Link className="underline" href="#">
+            Reset My Password
+          </Link>
         </div>
       </div>
 
@@ -40,12 +44,11 @@ const FormLoginCAP = ({ onSubmit }: IProps) => {
           className={`
             text-md
             rounded-md
-            px-4 py-2
-            bg-purple-600
-            hover:bg-purple-800
+            bg-purple-600 px-4
+            py-2
             text-white
-            disabled:border disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500`
-          }
+            hover:bg-purple-800
+            disabled:border disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500`}
           disabled={!password || !email}
           onClick={onSubmit}
         >

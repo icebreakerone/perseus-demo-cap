@@ -1,27 +1,27 @@
-"use client";
+'use client'
 
-import { SessionData } from '@lib/auth';
-import { useEffect, useState } from 'react';
+import { SessionData } from '@lib/auth'
+import { useEffect, useState } from 'react'
 
 export function useSession() {
-  const [session, setSession] = useState<SessionData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<SessionData | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchSession() {
       try {
-        const res = await fetch('/session');
-        const data = await res.json();
-        setSession(data);
+        const res = await fetch('/session')
+        const data = await res.json()
+        setSession(data)
       } catch (error) {
-        console.error('Failed to fetch session:', error);
+        console.error('Failed to fetch session:', error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
 
-    fetchSession();
-  }, []);
+    fetchSession()
+  }, [])
 
-  return { session, loading };
+  return { session, loading }
 }

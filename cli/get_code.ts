@@ -24,7 +24,7 @@ console.log('Raw discovery document:', json)
 console.log(`Discovering issuer at: ${config.server.href}`)
 // Couldn't use .discovery() without providing the path due to URL.href adding a trailing slash
 // meaning issuer doesn't match the expected issuer from the discovery document
-let clientMetadata = { use_mtls_endpoint_aliases: true }
+const clientMetadata = { use_mtls_endpoint_aliases: true }
 
 const issuer = await client.discovery(
   new URL('/.well-known/oauth-authorization-server', config.server),
@@ -41,7 +41,7 @@ const code_verifier = client.randomPKCECodeVerifier()
 const code_challenge = await client.calculatePKCECodeChallenge(code_verifier)
 writeFileSync('code_verifier.txt', code_verifier) // In production this might be a session
 // Construct the parameters for PAR
-let parameters: Record<string, string> = {
+const parameters: Record<string, string> = {
   client_id: config.clientId,
   redirect_uri: config.redirectUri,
   response_type: 'code',
@@ -54,9 +54,7 @@ let parameters: Record<string, string> = {
 // Use PAR to get request_uri
 const parEndpoint =
   issuer.serverMetadata().pushed_authorization_request_endpoint
-if (!parEndpoint) {
-  throw new Error('Authorization endpoint is undefined')
-}
+if (!parEndpoint) throw new Error('Authorization endpoint is undefined')
 
 const parResponse = await customFetch(parEndpoint, {
   method: 'POST',
@@ -79,9 +77,9 @@ console.log('PAR Response:', parData)
 
 // Redirect user to authorization endpoint with request_uri
 const authorizationEndpoint = issuer.serverMetadata().authorization_endpoint
-if (!authorizationEndpoint) {
+if (!authorizationEndpoint)
   throw new Error('Authorization endpoint is undefined')
-}
+
 const authorizationUrl = new URL(authorizationEndpoint)
 authorizationUrl.searchParams.set('client_id', config.clientId)
 authorizationUrl.searchParams.set('request_uri', parData.request_uri)
