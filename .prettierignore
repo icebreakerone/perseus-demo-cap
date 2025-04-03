@@ -1,0 +1,5 @@
+deployment
+.mypy_cache
+certs
+*.md
+*.js

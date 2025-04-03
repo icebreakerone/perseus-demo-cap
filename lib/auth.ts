@@ -26,8 +26,16 @@ interface IClientConfig extends ICertificates {
   protectedResourceUrl: URL
 }
 
-const env = process.env.APP_ENV || 'dev'
-const isDevelopment = env === 'dev'
+export interface SessionData {
+  isLoggedIn: boolean
+  access_token?: string
+  code_verifier?: string
+  state?: string
+  tenantId?: string
+}
+
+const env = process.env.APP_ENV || 'local'
+const isLocal = env === 'local'
 
 // Define a function to load certificates in development (local files)
 const loadCertificatesFromLocal = (): ICertificates => {
@@ -67,7 +75,7 @@ const loadCertificatesFromSecretsManager = async (): Promise<ICertificates> => {
 
 // Function to initialize clientConfig asynchronously
 export const initializeClientConfig = async (): Promise<IClientConfig> => {
-  const certificates = isDevelopment
+  const certificates = isLocal
     ? loadCertificatesFromLocal()
     : await loadCertificatesFromSecretsManager()
 
@@ -94,26 +102,18 @@ export const initializeClientConfig = async (): Promise<IClientConfig> => {
 // Initialize clientConfig
 const clientConfigPromise = initializeClientConfig()
 
-// Session and fetch setup remain unchanged
+export const getSessionOptions = (): SessionOptions => {
+  const password = process.env.SECRET_COOKIE_PASSWORD
+  if (!password)
+    throw new Error('SECRET_COOKIE_PASSWORD environment variable is missing')
 
-export interface SessionData {
-  isLoggedIn: boolean
-  access_token?: string
-  code_verifier?: string
-  state?: string
-  tenantId?: string
-}
-
-const password = process.env.SECRET_COOKIE_PASSWORD as string
-if (!password)
-  throw new Error('SECRET_COOKIE_PASSWORD environment variable is missing')
-
-export const sessionOptions: SessionOptions = {
-  password: password,
-  cookieName: 'iron-session',
-  cookieOptions: {
-    secure: process.env.NODE_ENV === 'production',
-  },
+  return {
+    password,
+    cookieName: 'iron-session',
+    cookieOptions: {
+      secure: process.env.NODE_ENV === 'production',
+    },
+  }
 }
 
 export const defaultSession: SessionData = {
@@ -123,7 +123,10 @@ export const defaultSession: SessionData = {
 export async function getSession() {
   const cookieStore = await cookies()
   console.log('cookieStore', cookieStore)
-  const session = await getIronSession<SessionData>(cookieStore, sessionOptions)
+  const session = await getIronSession<SessionData>(
+    cookieStore,
+    getSessionOptions(),
+  )
 
   if (!session.isLoggedIn) session.isLoggedIn = defaultSession.isLoggedIn
 

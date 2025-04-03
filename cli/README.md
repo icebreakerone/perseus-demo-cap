@@ -4,7 +4,7 @@ This cli demonstrates the authentication and authorization code flow for the per
 
 ## Certificate setup
 
-You will need to generate a key pair and a certificate for the mtls connections using the UI at the ib1 directory. Visit [the members area](https://directory.core.pilot.trust.ib1.org/members/) for more information. 
+You will need to generate a key pair and a certificate for the mtls connections using the UI at the ib1 directory. Visit [the members area](https://directory.core.pilot.trust.ib1.org/members/) for more information.
 
 - Generate a certificate at the ib1 directory and download
 - Download the CA client bundle
@@ -12,14 +12,16 @@ You will need to generate a key pair and a certificate for the mtls connections 
 
 ```typescript
 export const config = {
-    server: new URL('https://preprod.mtls.perseus-demo-authentication.ib1.org'),
-    clientId: 'f67916ce-de33-4e2f-a8e3-cbd5f6459c30',
-    redirectUri: 'http://localhost:3000/callback',
-    mtlsBundlePath: './certs/local-development-bundle.pem',
-    mtlsKeyPath: './certs/local-development-key.pem',
-    serverCaPath: './certs/directory-server-certificates/bundle.pem', // Root CA certificate
-    protectedResourceUrl: new URL('https://preprod.perseus-demo-energy.ib1.org/datasources/id/measure?from=2024-12-05T00:00:00Z&to=2024-12-06T00:00:00Z'),
-};
+  server: new URL('https://preprod.mtls.perseus-demo-authentication.ib1.org'),
+  clientId: 'f67916ce-de33-4e2f-a8e3-cbd5f6459c30',
+  redirectUri: 'http://localhost:3000/callback',
+  mtlsBundlePath: './certs/local-development-bundle.pem',
+  mtlsKeyPath: './certs/local-development-key.pem',
+  serverCaPath: './certs/directory-server-certificates/bundle.pem', // Root CA certificate
+  protectedResourceUrl: new URL(
+    'https://preprod.perseus-demo-energy.ib1.org/datasources/id/measure?from=2024-12-05T00:00:00Z&to=2024-12-06T00:00:00Z',
+  ),
+}
 ```
 
 You may also need to update the redirectUri if you change the port or domain of the callback server.
