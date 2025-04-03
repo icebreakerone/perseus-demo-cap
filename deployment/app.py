@@ -1,0 +1,80 @@
+import os
+import uuid
+
+from aws_cdk import App, Stack
+import aws_cdk as cdk
+
+
+from deployment.networking import NetworkConstruct
+from deployment.policies import SecretsManagerPolicy
+
+
+from deployment.nextjs_service import NextJsService
+from deployment.certificate import Certificate
+from models import Context
+
+app = App()
+
+deployment_context = app.node.try_get_context("deployment_context") or "dev"
+
+
+contexts: dict[str, Context] = {
+    "dev": {
+        "environment_name": "dev",
+        "domain": "preprod.perseus-demo-cap.ib1.org",
+        "hosted_zone_name": "perseus-demo-cap.ib1.org",
+    },
+    "prod": {
+        "environment_name": "prod",
+        "domain": "perseus-demo-cap.ib1.org",
+        "hosted_zone_name": "perseus-demo-cap.ib1.org",
+    },
+}
+
+stack = Stack(
+    app,
+    f"CapDemoStack-{deployment_context}",
+    env=cdk.Environment(
+        account=os.getenv("CDK_DEFAULT_ACCOUNT"), region=os.getenv("CDK_DEFAULT_REGION")
+    ),
+)
+
+network = NetworkConstruct(
+    stack, "Network", environment_name=contexts[deployment_context]["environment_name"]
+)
+secrets_policy = SecretsManagerPolicy(
+    stack,
+    "SSMPermissions",
+    app_name="perseus-demo-cap",
+    env_name=contexts[deployment_context]["environment_name"],
+)
+
+certificate = Certificate(
+    stack,
+    "Certificate",
+    domain_name=contexts[deployment_context]["domain"],
+    hosted_zone_name=contexts[deployment_context]["hosted_zone_name"],
+)
+
+
+nextjs_service = NextJsService(
+    stack,
+    "NextJsService",
+    vpc=network.vpc,
+    secrets_policy=secrets_policy.policy,
+    environment={
+        "SECRET_COOKIE_PASSWORD": uuid.uuid4().hex,
+        "APP_ENV": deployment_context,
+    },
+    ecs_sg=network.ecs_sg,
+    certificate=certificate.certificate,
+    domain_name=contexts[deployment_context]["domain"],
+    domain_zone_name=contexts[deployment_context]["hosted_zone_name"],
+    env_name=(
+        "prod"
+        if contexts[deployment_context]["environment_name"] == "prod"
+        else "preprod"
+    ),
+)
+
+app.synth()
