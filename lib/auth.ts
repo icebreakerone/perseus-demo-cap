@@ -54,7 +54,7 @@ const loadCertificatesFromLocal = (): ICertificates => {
 const loadCertificatesFromSecretsManager = async (): Promise<ICertificates> => {
   const secretsManager = new SecretsManagerClient({ region: 'eu-west-2' })
   const secretName = `${process.env.APP_ENV}/perseus-demo-cap/mtls-key-bundle`
-
+  console.log('Loading certificates from AWS Secrets Manager:', secretName)
   try {
     const command = new GetSecretValueCommand({ SecretId: secretName })
     const data = await secretsManager.send(command)
