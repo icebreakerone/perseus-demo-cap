@@ -78,12 +78,10 @@ app.get('/callback', async (req, res) => {
     console.log('Access Token:', tokenData.access_token)
 
     // Now use the access token to fetch data from the data server
-    /*
     console.log(
       'Fetching data from data server:',
       config.protectedResourceUrl.href,
     )
-    */
     const dataResponse = await customFetch(config.protectedResourceUrl, {
       method: 'GET',
       headers: {
@@ -103,9 +101,36 @@ app.get('/callback', async (req, res) => {
     }
 
     const jsonData = await dataResponse.json()
-    console.log('Data from data server:', jsonData)
+    // Test retrieving permissions using the refresh token
+    console.log(
+      'Testing permissions with refresh token:',
+      tokenData.refresh_token,
+    )
+    const permissionsBody = new URLSearchParams({
+      token: tokenData.refresh_token,
+    })
 
-    // Send the JSON response back to the client
+    const permissionsResponse = await customFetch(
+      new URL('/api/v1/permissions', config.server),
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: permissionsBody.toString(),
+      },
+    )
+
+    if (!permissionsResponse.ok) {
+      const errorText = await permissionsResponse.text()
+      console.error(
+        `Error testing permissions: ${permissionsResponse.status} ${permissionsResponse.statusText}`,
+      )
+      return res.status(500).send(`Error testing permissions: ${errorText}`)
+    }
+
+    const permissionsData = await permissionsResponse.json()
+    console.log('Permissions data:', permissionsData)
     res.json(jsonData)
   } catch (error) {
     console.error('Error during token exchange:', error)
