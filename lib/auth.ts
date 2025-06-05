@@ -169,24 +169,23 @@ export async function getClientConfig() {
   return issuer
 }
 
-export async function generateAuthUrl(session: IronSession<SessionData>) {
-  const issuer = await getClientConfig()
+export async function generateAuthUrl(
+  session: IronSession<SessionData>,
+): Promise<string> {
   const clientConfig = await clientConfigPromise
+  const customFetch = await createCustomFetch()
+  const issuer = await getClientConfig()
+
   // Generate PKCE code verifier and challenge
   const code_verifier = client.randomPKCECodeVerifier()
   const code_challenge = await client.calculatePKCECodeChallenge(code_verifier)
 
   // Store code_verifier in session for later token exchange
   session.code_verifier = code_verifier
+  await session.save()
 
-  // Prepare PAR request
-  const customFetch = await createCustomFetch()
-  const parEndpoint =
-    issuer.serverMetadata().pushed_authorization_request_endpoint
-  console.log('parEndpoint', parEndpoint)
-  if (!parEndpoint) throw new Error('PAR endpoint not found in server metadata')
-
-  const parameters = {
+  // PAR parameters
+  const parameters: Record<string, string> = {
     client_id: clientConfig.client_id,
     redirect_uri: clientConfig.redirect_uri,
     response_type: 'code',
@@ -195,7 +194,13 @@ export async function generateAuthUrl(session: IronSession<SessionData>) {
     code_challenge_method: 'S256',
   }
   console.log('parameters', parameters)
-  // Make PAR request
+
+  // Use PAR to get request_uri
+  const parEndpoint =
+    issuer.serverMetadata().pushed_authorization_request_endpoint
+  console.log('parEndpoint', parEndpoint)
+  if (!parEndpoint) throw new Error('PAR endpoint not found')
+
   const parResponse = await customFetch(parEndpoint, {
     method: 'POST',
     headers: {
@@ -211,15 +216,13 @@ export async function generateAuthUrl(session: IronSession<SessionData>) {
 
   const parData = await parResponse.json()
 
-  // Generate authorization URL with request_uri
+  // Redirect user to authorization endpoint with request_uri
   const authEndpoint = issuer.serverMetadata().authorization_endpoint
   if (!authEndpoint) throw new Error('Authorization endpoint not found')
 
   const authUrl = new URL(authEndpoint)
   authUrl.searchParams.set('client_id', clientConfig.client_id)
   authUrl.searchParams.set('request_uri', parData.request_uri)
-
-  await session.save()
 
   return authUrl.href
 }

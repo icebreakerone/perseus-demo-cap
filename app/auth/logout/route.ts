@@ -1,4 +1,3 @@
-// import { clientConfig, getClientConfig, getSession } from '@/lib/auth'
 import { getClientConfig, getSession } from '@/lib/auth'
 
 export async function GET(): Promise<Response> {
