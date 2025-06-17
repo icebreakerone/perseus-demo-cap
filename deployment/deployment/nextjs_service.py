@@ -6,6 +6,7 @@ from aws_cdk import (
     aws_ecs_patterns as ecs_patterns,
     aws_certificatemanager as acm,
     aws_route53 as route53,
+    Tags,
 )
 from constructs import Construct
 
@@ -30,13 +31,17 @@ class NextJsService(Construct):
         # Create ECS Cluster
         cluster = ecs.Cluster(self, "CapNextJsAppCluster", vpc=vpc)
 
+        # Add tags to ECS cluster
+        Tags.of(cluster).add("ResourceType", "ecs-cluster")
+        Tags.of(cluster).add("Purpose", "application-hosting")
+
         # Define the Fargate service with ALB
         fargate_service = ecs_patterns.ApplicationLoadBalancedFargateService(
             self,
             "CapNextJsAppService",
             cluster=cluster,
-            cpu=512,
-            memory_limit_mib=1024,
+            cpu=256,
+            memory_limit_mib=512,
             desired_count=1,
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
                 image=ecs.ContainerImage.from_asset(
@@ -48,7 +53,7 @@ class NextJsService(Construct):
                 environment=environment,
             ),
             public_load_balancer=True,
-            assign_public_ip=False,
+            assign_public_ip=True,
             security_groups=[ecs_sg],
             enable_execute_command=True,
             domain_name=domain_name,
@@ -57,6 +62,14 @@ class NextJsService(Construct):
             ),
             certificate=certificate,
         )
+
+        # Add tags to ALB and ECS service
+        Tags.of(fargate_service.load_balancer).add("ResourceType", "alb")
+        Tags.of(fargate_service.load_balancer).add(
+            "Purpose", "application-load-balancing"
+        )
+        Tags.of(fargate_service.service).add("ResourceType", "ecs-service")
+        Tags.of(fargate_service.service).add("Purpose", "nextjs-application")
 
         # Configure health check path
         fargate_service.target_group.configure_health_check(path="/")
