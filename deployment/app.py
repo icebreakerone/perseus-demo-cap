@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from aws_cdk import App, Stack
+from aws_cdk import App, Stack, Tags
 import aws_cdk as cdk
 
 
@@ -23,11 +23,13 @@ contexts: dict[str, Context] = {
         "environment_name": "dev",
         "domain": "preprod.perseus-demo-cap.ib1.org",
         "hosted_zone_name": "perseus-demo-cap.ib1.org",
+        "auth_domain": "mtls.perseus-demo-authentication.ib1.org",
     },
     "prod": {
         "environment_name": "prod",
         "domain": "perseus-demo-cap.ib1.org",
         "hosted_zone_name": "perseus-demo-cap.ib1.org",
+        "auth_domain": "preprod.mtls.perseus-demo-authentication.ib1.org",
     },
 }
 
@@ -38,6 +40,9 @@ stack = Stack(
         account=os.getenv("CDK_DEFAULT_ACCOUNT"), region=os.getenv("CDK_DEFAULT_REGION")
     ),
 )
+
+Tags.of(stack).add("App", "perseus-demo-cap")
+Tags.of(stack).add("Environment", deployment_context)
 
 network = NetworkConstruct(
     stack, "Network", environment_name=contexts[deployment_context]["environment_name"]
@@ -64,7 +69,12 @@ nextjs_service = NextJsService(
     secrets_policy=secrets_policy.policy,
     environment={
         "SECRET_COOKIE_PASSWORD": uuid.uuid4().hex,
+        "NEXT_PUBLIC_APP_URL": f"https://{contexts[deployment_context]["domain"]}",
+        "NEXT_PUBLIC_REDIRECT_URL": f"https://{contexts[deployment_context]["domain"]}?key=edpVerified",
+        "NEXT_PUBLIC_CLIENT_ID": "f67916ce-de33-4e2f-a8e3-cbd5f6459c30",
+        "NEXT_PUBLIC_SERVER": f"https://{contexts[deployment_context]['auth_domain']}",
         "APP_ENV": deployment_context,
+        "NODE_ENV": "production",
     },
     ecs_sg=network.ecs_sg,
     certificate=certificate.certificate,
