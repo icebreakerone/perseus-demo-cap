@@ -4,7 +4,6 @@ import {
   getSession,
   initializeClientConfig,
 } from '@/lib/auth'
-import * as openid from 'openid-client'
 import { NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest): Promise<Response> {
@@ -20,26 +19,34 @@ export async function GET(request: NextRequest): Promise<Response> {
 
     if (!code) throw new Error('No authorization code received')
 
-    // Create openid-client with mTLS support
-    const oauthClient = new issuer.Client({
+    console.log('Exchanging code for tokens using mTLS...')
+    const tokenEndpoint = issuer.serverMetadata().token_endpoint
+    console.log('Token endpoint:', tokenEndpoint)
+
+    if (!tokenEndpoint) throw new Error('No token endpoint in discovery')
+
+    const body = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: clientConfig.redirect_uri,
       client_id: clientConfig.client_id,
-      redirect_uris: [clientConfig.redirect_uri],
-      response_types: ['code'],
-      token_endpoint_auth_method: 'tls_client_auth',
+      code_verifier: session.code_verifier || '',
+    }).toString()
+
+    const tokenResponse = await customFetch(tokenEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
     })
 
-    console.log('Exchanging code for tokens using mTLS...')
-    console.log('Token endpoint:', issuer.serverMetadata().token_endpoint)
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text()
+      throw new Error(
+        `Token request failed: ${tokenResponse.status} ${tokenResponse.statusText} - ${errorText}`,
+      )
+    }
 
-    // Use openid-client's built-in token exchange with mTLS
-    const tokenSet = await oauthClient.callback(
-      clientConfig.redirect_uri,
-      { code },
-      { code_verifier: session.code_verifier },
-      {
-        [openid.customFetch]: customFetch, // Use mTLS for token request
-      },
-    )
+    const tokenSet = (await tokenResponse.json()) as { access_token?: string }
 
     // Store tokens in session
     session.access_token = tokenSet.access_token
