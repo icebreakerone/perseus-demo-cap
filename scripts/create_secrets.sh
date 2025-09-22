@@ -1,4 +1,6 @@
 #!/bin/bash
+# Allow ENV to be provided as an argument, default to 'dev'
+ENV="${1:-dev}"
 
 # Define file paths for your local certificate files
 MTLS_KEY_PATH="../certs/cap-demo-certs/cap-demo-key.pem"
@@ -6,7 +8,7 @@ MTLS_BUNDLE_PATH="../certs/cap-demo-certs/cap-demo-bundle.pem"
 # SERVER_CA_PATH="../certs/directory-server-certificates/bundle.pem"
 
 # Define secret name and description
-SECRET_NAME="dev/perseus-demo-cap/mtls-key-bundle"
+SECRET_NAME="${ENV}/perseus-demo-cap/mtls-key-bundle"
 SECRET_DESCRIPTION="Certificates and keys for mTLS"
 
 # Check if the files exist

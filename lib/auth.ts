@@ -40,7 +40,7 @@ const isLocal = env === 'local'
 // Define a function to load certificates in development (local files)
 const loadCertificatesFromLocal = (): ICertificates => {
   const mtlsKeyPath = './certs/cap-demo-certs/cap-demo-key.pem'
-  const mtlsCertPath = './certs/cap-demo-certs/cap-demo-cert.pem'
+  const mtlsCertPath = './certs/cap-demo-certs/cap-demo-bundle.pem'
   const mtlsCaPath =
     './certs/cap-demo-certs/directory-client-certificates/root-ca.pem'
 
