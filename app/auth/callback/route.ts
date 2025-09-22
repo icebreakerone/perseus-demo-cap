@@ -4,6 +4,7 @@ import {
   getSession,
   initializeClientConfig,
 } from '@/lib/auth'
+import * as openid from 'openid-client'
 import { NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest): Promise<Response> {
@@ -11,6 +12,7 @@ export async function GET(request: NextRequest): Promise<Response> {
   const issuer = await getClientConfig()
   const customFetch = await createCustomFetch()
   const clientConfig = await initializeClientConfig()
+
   try {
     // Get the authorization code from the URL
     const url = new URL(request.url)
@@ -18,37 +20,33 @@ export async function GET(request: NextRequest): Promise<Response> {
 
     if (!code) throw new Error('No authorization code received')
 
-    // Exchange code for tokens using mTLS
-    const tokenEndpoint = issuer.serverMetadata().token_endpoint
-    if (!tokenEndpoint) throw new Error('Token endpoint not found')
-
-    const tokenResponse = await customFetch(tokenEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        client_id: clientConfig.client_id,
-        redirect_uri: clientConfig.redirect_uri,
-        code_verifier: session.code_verifier || '',
-      }).toString(),
+    // Create openid-client with mTLS support
+    const oauthClient = new issuer.Client({
+      client_id: clientConfig.client_id,
+      redirect_uris: [clientConfig.redirect_uri],
+      response_types: ['code'],
+      token_endpoint_auth_method: 'tls_client_auth',
     })
 
-    // eslint-disable-next-line curly
-    if (!tokenResponse.ok) {
-      throw new Error(
-        `Token request failed: ${tokenResponse.status} ${tokenResponse.statusText}`,
-      )
-    }
+    console.log('Exchanging code for tokens using mTLS...')
+    console.log('Token endpoint:', issuer.serverMetadata().token_endpoint)
 
-    const tokens = (await tokenResponse.json()) as { access_token: string }
+    // Use openid-client's built-in token exchange with mTLS
+    const tokenSet = await oauthClient.callback(
+      clientConfig.redirect_uri,
+      { code },
+      { code_verifier: session.code_verifier },
+      {
+        [openid.customFetch]: customFetch, // Use mTLS for token request
+      },
+    )
 
     // Store tokens in session
-    session.access_token = tokens.access_token
+    session.access_token = tokenSet.access_token
     session.isLoggedIn = true
     await session.save()
+
+    console.log('Token exchange successful')
 
     // Redirect to post-login route
     return Response.redirect(clientConfig.post_login_route)
