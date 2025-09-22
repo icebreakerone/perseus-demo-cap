@@ -245,9 +245,7 @@ export async function generateAuthUrl(
 
   const parEndpoint =
     config.serverMetadata().pushed_authorization_request_endpoint
-  if (!parEndpoint) {
-    throw new Error('PAR endpoint not found in server metadata')
-  }
+  if (!parEndpoint) throw new Error('PAR endpoint not found in server metadata')
 
   const parResponse = await customFetch(parEndpoint, {
     method: 'POST',
@@ -274,15 +272,11 @@ export async function generateAuthUrl(
   const parData = await parResponse.json()
   console.log('PAR response:', parData)
 
-  if (!parData.request_uri) {
-    throw new Error('No request_uri in PAR response')
-  }
+  if (!parData.request_uri) throw new Error('No request_uri in PAR response')
 
   // Build authorization URL with request_uri
   const authEndpoint = config.serverMetadata().authorization_endpoint
-  if (!authEndpoint) {
-    throw new Error('Authorization endpoint not found')
-  }
+  if (!authEndpoint) throw new Error('Authorization endpoint not found')
 
   const authUrl = new URL(authEndpoint)
   authUrl.searchParams.set('client_id', clientConfig.client_id)
