@@ -1,6 +1,6 @@
 import { getIronSession, IronSession, SessionOptions } from 'iron-session'
 import { cookies } from 'next/headers'
-import * as client from 'openid-client'
+import * as openid from 'openid-client'
 import * as undici from 'undici'
 import { readFileSync } from 'fs'
 import {
@@ -10,8 +10,8 @@ import {
 
 interface ICertificates {
   mtlsKey: string
-  mtlsBundle: string
-  serverCa: string
+  mtlsCert: string
+  mtlsCa: string
 }
 
 interface IClientConfig extends ICertificates {
@@ -39,14 +39,32 @@ const isLocal = env === 'local'
 
 // Define a function to load certificates in development (local files)
 const loadCertificatesFromLocal = (): ICertificates => {
-  const mtlsKeyPath = './certs/local-development-key.pem'
-  const mtlsBundlePath = './certs/local-development-bundle.pem'
-  const serverCaPath = './certs/directory-server-certificates/bundle.pem'
+  const mtlsKeyPath = './certs/cap-demo-certs/cap-demo-key.pem'
+  const mtlsCertPath = './certs/cap-demo-certs/cap-demo-bundle.pem'
+  const mtlsCaPath =
+    './certs/cap-demo-certs/directory-client-certificates/root-ca.pem'
+
+  console.log(
+    'Loading certificates from:',
+    mtlsKeyPath,
+    mtlsCertPath,
+    mtlsCaPath,
+  )
+
+  const mtlsKey = readFileSync(mtlsKeyPath, 'utf8')
+  const mtlsCert = readFileSync(mtlsCertPath, 'utf8')
+  const mtlsCa = readFileSync(mtlsCaPath, 'utf8')
+
+  console.log('Key length:', mtlsKey.length)
+  console.log('Cert length:', mtlsCert.length)
+  console.log('CA length:', mtlsCa.length)
+  console.log('Key starts with:', mtlsKey.substring(0, 50))
+  console.log('Cert starts with:', mtlsCert.substring(0, 50))
 
   return {
-    mtlsKey: readFileSync(mtlsKeyPath, 'utf8'),
-    mtlsBundle: readFileSync(mtlsBundlePath, 'utf8'),
-    serverCa: readFileSync(serverCaPath, 'utf8'),
+    mtlsKey,
+    mtlsCert,
+    mtlsCa,
   }
 }
 
@@ -64,8 +82,8 @@ const loadCertificatesFromSecretsManager = async (): Promise<ICertificates> => {
 
     return {
       mtlsKey: secret.mtlsKey,
-      mtlsBundle: secret.mtlsBundle,
-      serverCa: secret.serverCa,
+      mtlsCert: secret.mtlsCert,
+      mtlsCa: secret.mtlsCa,
     }
   } catch (error) {
     console.error('Error retrieving certificates from Secrets Manager:', error)
@@ -75,17 +93,26 @@ const loadCertificatesFromSecretsManager = async (): Promise<ICertificates> => {
 
 // Function to initialize clientConfig asynchronously
 export const initializeClientConfig = async (): Promise<IClientConfig> => {
-  const certificates = isLocal
-    ? loadCertificatesFromLocal()
-    : await loadCertificatesFromSecretsManager()
+  let certificates: ICertificates
+
+  if (isLocal)
+    try {
+      certificates = loadCertificatesFromLocal()
+      console.log('Successfully loaded certificates from local files')
+    } catch (error) {
+      console.error('Failed to load certificates from local files:', error)
+      console.log('Falling back to AWS Secrets Manager...')
+      certificates = await loadCertificatesFromSecretsManager()
+    }
+  else certificates = await loadCertificatesFromSecretsManager()
 
   return {
-    server: new URL(process.env.NEXT_PUBLIC_SERVER as string),
+    server: new URL('https://preprod.perseus-demo-authentication.ib1.org'), // Non-mTLS endpoint for discovery
     client_id: process.env.NEXT_PUBLIC_CLIENT_ID as string,
     redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
     mtlsKey: certificates.mtlsKey,
-    mtlsBundle: certificates.mtlsBundle,
-    serverCa: certificates.serverCa,
+    mtlsCert: certificates.mtlsCert,
+    mtlsCa: certificates.mtlsCa,
     scope:
       'https://registry.core.pilot.trust.ib1.org/scheme/perseus/license/energy-consumption-data/2024-12-05+offline_access',
     response_type: 'code',
@@ -122,7 +149,6 @@ export const defaultSession: SessionData = {
 
 export async function getSession() {
   const cookieStore = await cookies()
-  console.log('cookieStore', cookieStore)
   const session = await getIronSession<SessionData>(
     cookieStore,
     getSessionOptions(),
@@ -137,11 +163,22 @@ export async function getSession() {
 export async function createCustomFetch() {
   // In server components, we can read files
   const clientConfig = await clientConfigPromise
+
+  console.log('Creating undici agent with certificates:')
+  console.log('Key length:', clientConfig.mtlsKey.length)
+  console.log('Cert length:', clientConfig.mtlsCert.length)
+  console.log('CA length:', clientConfig.mtlsCa.length)
+  console.log(
+    'CA bundle contains certificates:',
+    (clientConfig.mtlsCa.match(/-----BEGIN CERTIFICATE-----/g) || []).length,
+  )
+
   const agent = new undici.Agent({
     connect: {
       key: clientConfig.mtlsKey,
-      cert: clientConfig.mtlsBundle,
-      ca: clientConfig.serverCa,
+      cert: clientConfig.mtlsCert,
+      // Don't specify ca - use system default CA bundle for server verification
+      rejectUnauthorized: true,
     },
   })
 
@@ -155,16 +192,28 @@ export async function createCustomFetch() {
 
 export async function getClientConfig() {
   const clientConfig = await clientConfigPromise
-  console.log(clientConfig)
-  const customFetch = await createCustomFetch()
-  // Use discovery with mTLS
-  const issuer = await client.discovery(
+
+  console.log('clientConfig.server', clientConfig.server)
+  console.log('Attempting OAuth discovery (non-mTLS endpoint)...')
+
+  // Discovery endpoint is NOT mTLS protected - use regular fetch
+  const issuer = await openid.discovery(
     new URL('/.well-known/oauth-authorization-server', clientConfig.server),
     clientConfig.client_id,
     { use_mtls_endpoint_aliases: true },
-    client.TlsClientAuth(),
-    { [client.customFetch]: customFetch },
   )
+
+  console.log('Discovery successful - found mTLS endpoints:', {
+    par: issuer.serverMetadata().pushed_authorization_request_endpoint,
+    token: issuer.serverMetadata().token_endpoint,
+  })
+
+  console.log('Server metadata PAR requirements:', {
+    require_pushed_authorization_requests:
+      issuer.serverMetadata().require_pushed_authorization_requests,
+    pushed_authorization_request_endpoint:
+      issuer.serverMetadata().pushed_authorization_request_endpoint,
+  })
 
   return issuer
 }
@@ -174,55 +223,67 @@ export async function generateAuthUrl(
 ): Promise<string> {
   const clientConfig = await clientConfigPromise
   const customFetch = await createCustomFetch()
-  const issuer = await getClientConfig()
+  const config = await getClientConfig()
 
   // Generate PKCE code verifier and challenge
-  const code_verifier = client.randomPKCECodeVerifier()
-  const code_challenge = await client.calculatePKCECodeChallenge(code_verifier)
+  const code_verifier = openid.randomPKCECodeVerifier()
+  const code_challenge = await openid.calculatePKCECodeChallenge(code_verifier)
 
   // Store code_verifier in session for later token exchange
   session.code_verifier = code_verifier
   await session.save()
 
-  // PAR parameters
-  const parameters: Record<string, string> = {
-    client_id: clientConfig.client_id,
-    redirect_uri: clientConfig.redirect_uri,
-    response_type: 'code',
-    scope: clientConfig.scope,
-    code_challenge,
-    code_challenge_method: 'S256',
-  }
-  console.log('parameters', parameters)
+  console.log('Generating authorization URL with PAR...')
+  console.log(
+    'PAR endpoint:',
+    config.serverMetadata().pushed_authorization_request_endpoint,
+  )
+  console.log('Auth endpoint:', config.serverMetadata().authorization_endpoint)
 
-  // Use PAR to get request_uri
+  // Manual PAR implementation since buildAuthorizationUrl doesn't handle it automatically
+  console.log('Making PAR request...')
+
   const parEndpoint =
-    issuer.serverMetadata().pushed_authorization_request_endpoint
-  console.log('parEndpoint', parEndpoint)
-  if (!parEndpoint) throw new Error('PAR endpoint not found')
+    config.serverMetadata().pushed_authorization_request_endpoint
+  if (!parEndpoint) throw new Error('PAR endpoint not found in server metadata')
 
   const parResponse = await customFetch(parEndpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: new URLSearchParams(parameters).toString(),
+    body: new URLSearchParams({
+      client_id: clientConfig.client_id,
+      redirect_uri: clientConfig.redirect_uri,
+      response_type: 'code',
+      scope: clientConfig.scope,
+      code_challenge,
+      code_challenge_method: 'S256',
+    }).toString(),
   })
 
-  if (!parResponse.ok)
+  if (!parResponse.ok) {
+    const errorText = await parResponse.text()
     throw new Error(
-      `PAR request failed: ${parResponse.status} ${parResponse.statusText}`,
+      `PAR request failed: ${parResponse.status} ${parResponse.statusText} - ${errorText}`,
     )
+  }
 
   const parData = await parResponse.json()
+  console.log('PAR response:', parData)
 
-  // Redirect user to authorization endpoint with request_uri
-  const authEndpoint = issuer.serverMetadata().authorization_endpoint
+  if (!parData.request_uri) throw new Error('No request_uri in PAR response')
+
+  // Build authorization URL with request_uri
+  const authEndpoint = config.serverMetadata().authorization_endpoint
   if (!authEndpoint) throw new Error('Authorization endpoint not found')
 
   const authUrl = new URL(authEndpoint)
   authUrl.searchParams.set('client_id', clientConfig.client_id)
   authUrl.searchParams.set('request_uri', parData.request_uri)
+
+  console.log('Generated authorization URL with PAR:', authUrl.href)
+  console.log('Request URI:', parData.request_uri)
 
   return authUrl.href
 }
