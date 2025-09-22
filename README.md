@@ -35,11 +35,10 @@ The app requires the following certificates and keys:
 
 - A private key belonging to the client
 - A bundle containing a directory issued certificate generated from the private key and the intermediate CA certificate for the directory client issuer
-- A bundle containing the directory CA root and intermediate certificate for the directory server issuer
 
 All keys and certificates are in PEM format.
 
-The client key and bundle are used for mutual TLS. The server certificate is used to verify the server's identity.
+The client key and bundle are used for mutual TLS. 
 
 For local development, these are local files. In production, these are stored in AWS Secrets Manager.
 
