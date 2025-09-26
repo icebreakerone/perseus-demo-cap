@@ -40,7 +40,7 @@ MTLS_BUNDLE_ESCAPED="${MTLS_BUNDLE//$'\n'/\\n}"
 SECRET_PAYLOAD=$(cat <<EOF
 {
   "mtlsKey": "$MTLS_KEY_ESCAPED",
-  "mtlsBundle": "$MTLS_BUNDLE_ESCAPED",
+  "mtlsBundle": "$MTLS_BUNDLE_ESCAPED"
 }
 EOF
 )
