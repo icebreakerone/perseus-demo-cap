@@ -10,8 +10,7 @@ import {
 
 interface ICertificates {
   mtlsKey: string
-  mtlsCert: string
-  mtlsCa: string
+  mtlsBundle: string
 }
 
 interface IClientConfig extends ICertificates {
@@ -40,31 +39,21 @@ const isLocal = env === 'local'
 // Define a function to load certificates in development (local files)
 const loadCertificatesFromLocal = (): ICertificates => {
   const mtlsKeyPath = './certs/cap-demo-certs/cap-demo-key.pem'
-  const mtlsCertPath = './certs/cap-demo-certs/cap-demo-bundle.pem'
-  const mtlsCaPath =
-    './certs/cap-demo-certs/directory-client-certificates/root-ca.pem'
+  const mtlsBundlePath = './certs/cap-demo-certs/cap-demo-bundle.pem' // leaf + intermediate
 
-  console.log(
-    'Loading certificates from:',
-    mtlsKeyPath,
-    mtlsCertPath,
-    mtlsCaPath,
-  )
+  console.log('Loading certificates from:', mtlsKeyPath, mtlsBundlePath)
 
   const mtlsKey = readFileSync(mtlsKeyPath, 'utf8')
-  const mtlsCert = readFileSync(mtlsCertPath, 'utf8')
-  const mtlsCa = readFileSync(mtlsCaPath, 'utf8')
+  const mtlsBundle = readFileSync(mtlsBundlePath, 'utf8')
 
   console.log('Key length:', mtlsKey.length)
-  console.log('Cert length:', mtlsCert.length)
-  console.log('CA length:', mtlsCa.length)
+  console.log('Cert length:', mtlsBundle.length)
   console.log('Key starts with:', mtlsKey.substring(0, 50))
-  console.log('Cert starts with:', mtlsCert.substring(0, 50))
+  console.log('Cert starts with:', mtlsBundle.substring(0, 50))
 
   return {
     mtlsKey,
-    mtlsCert,
-    mtlsCa,
+    mtlsBundle,
   }
 }
 
@@ -80,10 +69,14 @@ const loadCertificatesFromSecretsManager = async (): Promise<ICertificates> => {
     if (!secret)
       throw new Error('Secret is empty or not in the expected format.')
 
+    // Support older payloads that used mtlsBundle instead of mtlsBundle
+    const mtlsBundle: string = secret.mtlsBundle || secret.mtlsBundle
+    if (!mtlsBundle)
+      throw new Error('Secret missing mtlsBundle (or mtlsBundle)')
+
     return {
       mtlsKey: secret.mtlsKey,
-      mtlsCert: secret.mtlsCert,
-      mtlsCa: secret.mtlsCa,
+      mtlsBundle,
     }
   } catch (error) {
     console.error('Error retrieving certificates from Secrets Manager:', error)
@@ -111,8 +104,7 @@ export const initializeClientConfig = async (): Promise<IClientConfig> => {
     client_id: process.env.NEXT_PUBLIC_CLIENT_ID as string,
     redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
     mtlsKey: certificates.mtlsKey,
-    mtlsCert: certificates.mtlsCert,
-    mtlsCa: certificates.mtlsCa,
+    mtlsBundle: certificates.mtlsBundle,
     scope:
       'https://registry.core.pilot.trust.ib1.org/scheme/perseus/license/energy-consumption-data/2024-12-05+offline_access',
     response_type: 'code',
@@ -166,17 +158,11 @@ export async function createCustomFetch() {
 
   console.log('Creating undici agent with certificates:')
   console.log('Key length:', clientConfig.mtlsKey.length)
-  console.log('Cert length:', clientConfig.mtlsCert.length)
-  console.log('CA length:', clientConfig.mtlsCa.length)
-  console.log(
-    'CA bundle contains certificates:',
-    (clientConfig.mtlsCa.match(/-----BEGIN CERTIFICATE-----/g) || []).length,
-  )
-
+  console.log('Cert length:', clientConfig.mtlsBundle.length)
   const agent = new undici.Agent({
     connect: {
       key: clientConfig.mtlsKey,
-      cert: clientConfig.mtlsCert,
+      cert: clientConfig.mtlsBundle,
       // Don't specify ca - use system default CA bundle for server verification
       rejectUnauthorized: true,
     },
