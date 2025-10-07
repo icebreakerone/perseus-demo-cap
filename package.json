@@ -28,7 +28,7 @@
     "mailgo": "^0.12.2",
     "negotiator": "^0.6.3",
     "next": "^15.2.2",
-    "nodemailer": "^6.9.4",
+    "nodemailer": "^7.0.7",
     "openid-client": "^6.3.3",
     "postcss": "^8.4.27",
     "prettier-plugin-tailwindcss": "^0.5.3",
