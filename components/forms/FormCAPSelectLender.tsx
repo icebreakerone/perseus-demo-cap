@@ -20,10 +20,8 @@ const FormCAPSelectLender = ({ onSubmit }: IProps) => {
           onChange={e => setLender(e.target.value)}
           required={true}
         >
-          <option selected>Select your lender</option>
-          <option value="IB1Bank">
-            IB1<strong>Bank</strong>
-          </option>
+          <option>Select your lender</option>
+          <option value="IB1Bank">IB1 Bank</option>
         </select>
       </div>
 

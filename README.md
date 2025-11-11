@@ -133,3 +133,19 @@ openssl ec -in your-key.pem -text -noout | grep -A 2 "ASN1 OID"
 **Wrong curve type**: Make sure both your key and certificate use the same elliptic curve (e.g., both P-256 or both P-384).
 
 **Bundle order**: The bundle should contain certificates in order: intermediate CA first, then your client certificate.
+
+#### 8. Uploading Certificates and Keys
+
+The deployments require certificates stored in s3 and a key stored in SSM. scripts/create_sectrets.sh can be used to update or create those files:
+
+```bash
+cd scripts
+./create_secrets.sh
+```
+
+The script expects the files to be available in:
+
+```
+certs/cap-demo-certs/cap-demo-key.pem
+certs/cap-demo-certs/cap-demo-bundle.pem
+```
