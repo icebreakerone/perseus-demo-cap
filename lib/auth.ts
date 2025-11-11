@@ -33,8 +33,20 @@ export interface SessionData {
   tenantId?: string
 }
 
-const env = process.env.APP_ENV || 'local'
-const isLocal = env === 'local'
+const resolveAppEnv = () => {
+  const value = process.env.APP_ENV ?? process.env.ENVIRONMENT
+
+  if (!value) {
+    console.warn(
+      'APP_ENV environment variable is missing; defaulting to "local"',
+    )
+    return 'local'
+  }
+
+  return value
+}
+
+const isLocalEnv = () => resolveAppEnv() === 'local'
 
 // Define a function to load certificates in development (local files)
 const loadCertificatesFromLocal = (): ICertificates => {
@@ -60,7 +72,7 @@ const loadCertificatesFromLocal = (): ICertificates => {
 // Define a function to load certificates from AWS Secrets Manager in production
 const loadCertificatesFromSecretsManager = async (): Promise<ICertificates> => {
   const secretsManager = new SecretsManagerClient({ region: 'eu-west-2' })
-  const secretName = `${process.env.APP_ENV}/perseus-demo-cap/mtls-key-bundle`
+  const secretName = `${resolveAppEnv()}/perseus-demo-cap/mtls-key-bundle`
   console.log('Loading certificates from AWS Secrets Manager:', secretName)
   try {
     const command = new GetSecretValueCommand({ SecretId: secretName })
@@ -88,7 +100,7 @@ const loadCertificatesFromSecretsManager = async (): Promise<ICertificates> => {
 export const initializeClientConfig = async (): Promise<IClientConfig> => {
   let certificates: ICertificates
 
-  if (isLocal)
+  if (isLocalEnv())
     try {
       certificates = loadCertificatesFromLocal()
       console.log('Successfully loaded certificates from local files')
@@ -118,8 +130,12 @@ export const initializeClientConfig = async (): Promise<IClientConfig> => {
   }
 }
 
-// Initialize clientConfig
-const clientConfigPromise = initializeClientConfig()
+let clientConfigPromise: Promise<IClientConfig> | null = null
+
+const getClientConfigPromise = () => {
+  if (!clientConfigPromise) clientConfigPromise = initializeClientConfig()
+  return clientConfigPromise
+}
 
 export const getSessionOptions = (): SessionOptions => {
   const password = process.env.SECRET_COOKIE_PASSWORD
@@ -154,7 +170,7 @@ export async function getSession() {
 // Create custom fetch with mTLS
 export async function createCustomFetch() {
   // In server components, we can read files
-  const clientConfig = await clientConfigPromise
+  const clientConfig = await getClientConfigPromise()
 
   console.log('Creating undici agent with certificates:')
   console.log('Key length:', clientConfig.mtlsKey.length)
@@ -177,7 +193,7 @@ export async function createCustomFetch() {
 }
 
 export async function getClientConfig() {
-  const clientConfig = await clientConfigPromise
+  const clientConfig = await getClientConfigPromise()
 
   console.log('clientConfig.server', clientConfig.server)
   console.log('Attempting OAuth discovery (non-mTLS endpoint)...')
@@ -207,7 +223,7 @@ export async function getClientConfig() {
 export async function generateAuthUrl(
   session: IronSession<SessionData>,
 ): Promise<string> {
-  const clientConfig = await clientConfigPromise
+  const clientConfig = await getClientConfigPromise()
   const customFetch = await createCustomFetch()
   const config = await getClientConfig()
 
