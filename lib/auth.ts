@@ -43,6 +43,7 @@ const resolveAppEnv = () => {
     return 'local'
   }
 
+  console.log('Resolved APP_ENV:', value)
   return value
 }
 
@@ -102,6 +103,7 @@ export const initializeClientConfig = async (): Promise<IClientConfig> => {
 
   if (isLocalEnv())
     try {
+      console.log('Attempting to load certificates from local filesystem')
       certificates = loadCertificatesFromLocal()
       console.log('Successfully loaded certificates from local files')
     } catch (error) {
@@ -109,7 +111,10 @@ export const initializeClientConfig = async (): Promise<IClientConfig> => {
       console.log('Falling back to AWS Secrets Manager...')
       certificates = await loadCertificatesFromSecretsManager()
     }
-  else certificates = await loadCertificatesFromSecretsManager()
+  else {
+    console.log('Non-local environment detected; loading certificates from AWS')
+    certificates = await loadCertificatesFromSecretsManager()
+  }
 
   return {
     server: new URL('https://preprod.perseus-demo-authentication.ib1.org'), // Non-mTLS endpoint for discovery
