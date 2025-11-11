@@ -19,43 +19,42 @@ const ViewCAPSharingConsent = ({ children }: IProps) => {
         As a reminder, we need to have your consent to access the following data
         provided by Perse.
       </p>
-      <label>Terms and conditions</label>
-      <div className="flex flex-1 overflow-y-auto overflow-x-hidden">
+      <h2>Terms and conditions</h2>
+      <div className="overflow-y-auto overflow-x-hidden">
         <p>
           [Carbon accounting provider] (&quot;we&quot;) need your consent to
           access the following data provided by [insert source of data]:
-          <ul>
-            <li>* Your electricity consumption (taken every 30 minutes)</li>
-            <li>* Electricity tariff data</li>
-            <li>
-              In order to compute the following (&quot;emissions data&quot;):
-            </li>
-            <li>
-              * An estimate of your current GHG emissions, sourced from the
-              preceding 12 months of data where available
-            </li>
-            <li>
-              * An estimate of projected emissions following any proposed
-              intervention(s) that could be financed: a one-off estimate prior
-              to the intervention, delivered once.
-            </li>
-            <li>
-              * A periodic update to corroborate projected emissions savings:
-              derived GHG emissions at monthly resolution, delivered annually
-            </li>
-            <li>and then use the emissions data as follows:</li>
-            <li>
-              * Share it with your chosen financial service provider(s) to
-              facilitate your access to green finance products from that
-              provider or providers.
-            </li>
-            <li>
-              * Produce personalised recommendations of actions that your
-              business could take to decarbonise (either financed or
-              non-financed)
-            </li>
-          </ul>
         </p>
+        <ul>
+          <li>* Your electricity consumption (taken every 30 minutes)</li>
+          <li>* Electricity tariff data</li>
+          <li>
+            In order to compute the following (&quot;emissions data&quot;):
+          </li>
+          <li>
+            * An estimate of your current GHG emissions, sourced from the
+            preceding 12 months of data where available
+          </li>
+          <li>
+            * An estimate of projected emissions following any proposed
+            intervention(s) that could be financed: a one-off estimate prior to
+            the intervention, delivered once.
+          </li>
+          <li>
+            * A periodic update to corroborate projected emissions savings:
+            derived GHG emissions at monthly resolution, delivered annually
+          </li>
+          <li>and then use the emissions data as follows:</li>
+          <li>
+            * Share it with your chosen financial service provider(s) to
+            facilitate your access to green finance products from that provider
+            or providers.
+          </li>
+          <li>
+            * Produce personalised recommendations of actions that your business
+            could take to decarbonise (either financed or non-financed)
+          </li>
+        </ul>
       </div>
       <div className="ml-8">{children}</div>
     </ErrorBoundary>
