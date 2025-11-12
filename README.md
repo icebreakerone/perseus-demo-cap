@@ -149,3 +149,77 @@ The script expects the files to be available in:
 certs/cap-demo-certs/cap-demo-key.pem
 certs/cap-demo-certs/cap-demo-bundle.pem
 ```
+
+## Using the CLI
+
+A cli is available to test endpoints. The script get_code.ts will:
+
+- Create a PAR
+- Use the PAR to create and display an authorisation URL
+
+Once the url has been used to authorise the request, the callback will be received by the callback server which will:
+
+- exchange the authorisation code for a token
+- use the token to retrieve data from the defined endpoint
+- request the assoicated provenance record and display it in the console
+
+### Configuration
+
+The CLI reads its configuration from `cli/config.ts`. Every value can also be overridden via environment variables at execution time:
+
+| Environment Variable | Description | Default |
+| -------------------- | ----------- | ------- |
+| `CLI_PUBLIC_SERVER` | OAuth issuer URL (non-mTLS discovery endpoint) | `https://preprod.perseus-demo-authentication.ib1.org` |
+| `CLI_PROTECTED_RESOURCE_URL` | Resource URL to fetch after obtaining a token | `https://preprod.mtls.perseus-demo-energy.ib1.org/datasources/id/measure?...` |
+| `CLI_MTLS_KEY_PATH` | Path to the client private key | `../certs/cap-demo-certs/cap-demo-key.pem` |
+| `CLI_MTLS_BUNDLE_PATH` | Path to the client certificate bundle (leaf + intermediate) | `../certs/cap-demo-certs/cap-demo-bundle.pem` |
+| `CLI_SERVER_CA_PATH` | Optional CA bundle to trust for server verification | unset |
+| `CLI_SKIP_SERVER_VERIFICATION` | If set to `true`, disables server certificate verification (useful for local self-signed certs) | `false` |
+| `CLI_CLIENT_ID` / `CLI_REDIRECT_URI` | OAuth client credentials | defaults in `config.ts` |
+
+### Running against local environments
+
+
+Given local servers running on the ports below: 
+
+```
+Authentication mTLS endpoint: https://localhost:8000
+Resource mTLS endpoint:       https://localhost:8010
+```
+
+To run the CLI against this environment (self-signed certificates, local ports):
+
+```
+CLI_PUBLIC_SERVER=https://localhost:8000 \
+CLI_PROTECTED_RESOURCE_URL=https://localhost:8010/datasources/... \
+CLI_SKIP_SERVER_VERIFICATION=true \
+cli get_code.ts
+```
+
+Similarly for the callback server:
+
+```
+CLI_PUBLIC_SERVER=https://localhost:8000 \
+CLI_PROTECTED_RESOURCE_URL=https://localhost:8010/datasources/... \
+CLI_SKIP_SERVER_VERIFICATION=true \
+cli npx tsx callback_server.ts
+```
+
+An alternative to skipping verification for self signed certificates is to supply a bundle for the self signed server certificate via CLI_SERVER_CA_PATH. 
+
+### Example 
+
+The following runs the flow against preproduction (no extra flags required):
+
+```
+cd cli
+npx tsx get_code.ts
+```
+
+Start the callback server in a separate terminal and complete the login through the browser when prompted:
+
+```
+cd cli
+npx tsx callback_server.ts
+```
+

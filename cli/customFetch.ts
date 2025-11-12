@@ -1,25 +1,48 @@
-import * as undici from 'undici'
 import { readFileSync } from 'fs'
+
+import {
+  createCustomFetch,
+  initializeClientConfig,
+  IClientConfig,
+} from '../lib/clientConfig'
 import { config } from './config'
 
-// Load mTLS certificates and CA chain
-const key = readFileSync(config.mtlsKeyPath, 'utf8')
-const cert = readFileSync(config.mtlsBundlePath, 'utf8')
-const ca = readFileSync(config.serverCaPath, 'utf8') // Root CA cert
+const serverCaBundle = (() => {
+  if (!config.serverCaPath) return undefined
+  try {
+    return readFileSync(config.serverCaPath, 'utf8')
+  } catch (error) {
+    console.warn(
+      `Failed to read server CA bundle from ${config.serverCaPath}:`,
+      error,
+    )
+    return undefined
+  }
+})()
 
-// Create an undici agent for mTLS
-const agent = new undici.Agent({
-  connect: {
-    key,
-    cert,
-    ca,
-  },
+const certificateOverrides = {
+  mtlsKey: readFileSync(config.mtlsKeyPath, 'utf8'),
+  mtlsBundle: readFileSync(config.mtlsBundlePath, 'utf8'),
+  caBundle: serverCaBundle,
+  skipServerVerification: config.skipServerVerification,
+}
+
+const clientConfigPromise = initializeClientConfig({
+  server: config.publicServer,
+  client_id: config.clientId,
+  redirect_uri: config.redirectUri,
+  post_login_route: config.postLoginRedirect,
+  protectedResourceUrl: config.protectedResourceUrl,
+  ...certificateOverrides,
 })
 
-// Custom fetch function that ensures all requests use mTLS
+const fetchFactory = clientConfigPromise.then(clientConfig =>
+  createCustomFetch(clientConfig),
+)
+
+export const clientConfig: Promise<IClientConfig> = clientConfigPromise
+
 export const customFetch: typeof fetch = async (url, options = {}) => {
-  return undici.fetch(url, {
-    ...options,
-    dispatcher: agent,
-  }) as unknown as Response
+  const fetchImpl = await fetchFactory
+  return fetchImpl(url, options)
 }

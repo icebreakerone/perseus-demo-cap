@@ -1,19 +1,18 @@
 import express from 'express'
 import * as client from 'openid-client'
-import { config } from './config'
-import { customFetch } from './customFetch'
 import { readFileSync } from 'fs'
+
+import { clientConfig as clientConfigPromise, customFetch } from './customFetch'
+
 const app = express()
 const port = 3000
 
-// Route to handle the OAuth2 callback and exchange code for a token
 app.get('/callback', async (req, res) => {
   const authorizationCode = req.query.code as string
 
   if (!authorizationCode)
     return res.status(400).send('Missing authorization code.')
 
-  // Read the code_verifier from the file
   let codeVerifier
   try {
     codeVerifier = readFileSync('code_verifier.txt', 'utf8')
@@ -24,20 +23,28 @@ app.get('/callback', async (req, res) => {
   console.log('Authorization code:', authorizationCode)
   console.log('PKCE Code Verifier:', codeVerifier)
 
-  // Discover the issuer and client metadata
-  console.log(`Discovering issuer at: ${config.server.href}`)
-  const clientMetadata = { use_mtls_endpoint_aliases: true }
+  const resolvedClientConfig = await clientConfigPromise
 
-  const issuer = await client.discovery(
-    new URL('/.well-known/oauth-authorization-server', config.server),
-    config.clientId,
-    clientMetadata,
-    client.TlsClientAuth(),
-    { [client.customFetch]: customFetch },
-  )
+  console.log(`Discovering issuer at: ${resolvedClientConfig.server.href}`)
+  const originalFetch = globalThis.fetch
+  let issuer: client.Configuration
+  try {
+    globalThis.fetch = customFetch as typeof fetch
+    issuer = await client.discovery(
+      new URL(
+        '/.well-known/oauth-authorization-server',
+        resolvedClientConfig.server,
+      ),
+      resolvedClientConfig.client_id,
+      { use_mtls_endpoint_aliases: true },
+      client.TlsClientAuth(),
+      { [client.customFetch]: customFetch },
+    )
+  } finally {
+    globalThis.fetch = originalFetch
+  }
   console.log('Discovered issuer:', issuer)
 
-  // Get the token endpoint from the issuer's metadata
   const tokenEndpoint = issuer.serverMetadata().token_endpoint
 
   if (!tokenEndpoint)
@@ -47,17 +54,15 @@ app.get('/callback', async (req, res) => {
 
   console.log('Token endpoint:', tokenEndpoint)
 
-  // Prepare the data for the token request
   const body = new URLSearchParams({
     code: authorizationCode,
-    client_id: config.clientId,
-    redirect_uri: config.redirectUri,
+    client_id: resolvedClientConfig.client_id,
+    redirect_uri: resolvedClientConfig.redirect_uri,
     code_verifier: codeVerifier,
-    grant_type: 'authorization_code',
+    grant_type: resolvedClientConfig.grant_type,
   })
 
   try {
-    // Send the token request using customFetch (undici)
     const tokenResponse = await customFetch(tokenEndpoint, {
       method: 'POST',
       headers: {
@@ -77,31 +82,38 @@ app.get('/callback', async (req, res) => {
     const tokenData = await tokenResponse.json()
     console.log('Access Token:', tokenData.access_token)
 
-    // Now use the access token to fetch data from the data server
     console.log(
       'Fetching data from data server:',
-      config.protectedResourceUrl.href,
+      resolvedClientConfig.protectedResourceUrl.href,
     )
-    const dataResponse = await customFetch(config.protectedResourceUrl, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${tokenData.access_token}`,
-        Accept: 'application/json',
+    const dataResponse = await customFetch(
+      resolvedClientConfig.protectedResourceUrl,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`,
+          Accept: 'application/json',
+        },
       },
-    })
+    )
 
     if (!dataResponse.ok) {
       const errorText = await dataResponse.text()
       console.error(
         `Error fetching data from data server: ${dataResponse.status} ${dataResponse.statusText}`,
       )
+      console.error(
+        'Response headers:',
+        Object.fromEntries(dataResponse.headers),
+      )
+      console.error('Response body:', errorText)
       return res
         .status(500)
         .send(`Error fetching data from data server: ${errorText}`)
     }
 
     const jsonData = await dataResponse.json()
-    // Test retrieving permissions using the refresh token
+
     console.log(
       'Testing permissions with refresh token:',
       tokenData.refresh_token,
@@ -111,7 +123,7 @@ app.get('/callback', async (req, res) => {
     })
 
     const permissionsResponse = await customFetch(
-      new URL('/api/v1/permissions', config.server),
+      new URL('/api/v1/permissions', resolvedClientConfig.server),
       {
         method: 'POST',
         headers: {
@@ -138,7 +150,6 @@ app.get('/callback', async (req, res) => {
   }
 })
 
-// Start the server
 app.listen(port, () => {
-  console.info(`Server is running on https://localhost:${port}`)
+  console.info(`Server is running on http://localhost:${port}`)
 })
