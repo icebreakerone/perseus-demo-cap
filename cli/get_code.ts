@@ -1,57 +1,64 @@
-import * as client from 'openid-client'
-import { config } from './config'
-import { customFetch } from './customFetch'
 import { writeFileSync } from 'fs'
+import * as client from 'openid-client'
+import { clientConfig as clientConfigPromise, customFetch } from './customFetch'
 
-// First, test direct fetch to ensure mTLS works
-console.log(
-  `Fetching metadata from: ${config.server.href}.well-known/oauth-authorization-server`,
-)
-const res = await customFetch(
-  new URL('/.well-known/oauth-authorization-server', config.server).toString(),
+const resolvedClientConfig = await clientConfigPromise
+
+const discoveryUrl = new URL(
+  '/.well-known/oauth-authorization-server',
+  resolvedClientConfig.server,
 )
 
-if (!res.ok) {
+console.log(`Fetching metadata from: ${discoveryUrl.href}`)
+const originalFetch = globalThis.fetch
+globalThis.fetch = customFetch as typeof fetch
+const discoveryResponse = await customFetch(discoveryUrl)
+
+if (!discoveryResponse.ok) {
   console.error(
-    `Error fetching discovery document: ${res.status} ${res.statusText}`,
+    `Error fetching discovery document: ${discoveryResponse.status} ${discoveryResponse.statusText}`,
   )
-  console.error(await res.text())
+  console.error(await discoveryResponse.text())
 }
-const json = await res.json()
-console.log('Raw discovery document:', json)
 
-// Now, pass the custom fetch function to discovery
-console.log(`Discovering issuer at: ${config.server.href}`)
-// Couldn't use .discovery() without providing the path due to URL.href adding a trailing slash
-// meaning issuer doesn't match the expected issuer from the discovery document
-const clientMetadata = { use_mtls_endpoint_aliases: true }
+globalThis.fetch = originalFetch
 
-const issuer = await client.discovery(
-  new URL('/.well-known/oauth-authorization-server', config.server),
-  config.clientId,
-  clientMetadata,
-  client.TlsClientAuth(),
-  { [client.customFetch]: customFetch },
-)
+const discoveryJson = await discoveryResponse.json()
+console.log('Raw discovery document:', discoveryJson)
+
+console.log(`Discovering issuer at: ${resolvedClientConfig.server.href}`)
+let issuer: client.Configuration
+try {
+  globalThis.fetch = customFetch as typeof fetch
+  issuer = await client.discovery(
+    discoveryUrl,
+    resolvedClientConfig.client_id,
+    { use_mtls_endpoint_aliases: true },
+    client.TlsClientAuth(),
+    { [client.customFetch]: customFetch },
+  )
+} finally {
+  globalThis.fetch = originalFetch
+}
+
 console.log('Discovered issuer:', issuer)
-
 console.log(issuer.serverMetadata())
 
 const code_verifier = client.randomPKCECodeVerifier()
 const code_challenge = await client.calculatePKCECodeChallenge(code_verifier)
-writeFileSync('code_verifier.txt', code_verifier) // In production this might be a session
-// Construct the parameters for PAR
+
+// In production this would be persisted securely. For the CLI we store it locally for the callback step.
+writeFileSync('code_verifier.txt', code_verifier)
+
 const parameters: Record<string, string> = {
-  client_id: config.clientId,
-  redirect_uri: config.redirectUri,
-  response_type: 'code',
-  scope:
-    'https://registry.core.pilot.trust.ib1.org/scheme/perseus/license/energy-consumption-data/2024-12-05+offline_access',
+  client_id: resolvedClientConfig.client_id,
+  redirect_uri: resolvedClientConfig.redirect_uri,
+  response_type: resolvedClientConfig.response_type,
+  scope: resolvedClientConfig.scope,
   code_challenge,
-  code_challenge_method: 'S256',
+  code_challenge_method: resolvedClientConfig.code_challenge_method,
 }
 
-// Use PAR to get request_uri
 const parEndpoint =
   issuer.serverMetadata().pushed_authorization_request_endpoint
 if (!parEndpoint) throw new Error('Authorization endpoint is undefined')
@@ -75,14 +82,13 @@ if (!parResponse.ok) {
 const parData = await parResponse.json()
 console.log('PAR Response:', parData)
 
-// Redirect user to authorization endpoint with request_uri
 const authorizationEndpoint = issuer.serverMetadata().authorization_endpoint
 if (!authorizationEndpoint)
   throw new Error('Authorization endpoint is undefined')
 
 const authorizationUrl = new URL(authorizationEndpoint)
-authorizationUrl.searchParams.set('client_id', config.clientId)
+authorizationUrl.searchParams.set('client_id', resolvedClientConfig.client_id)
 authorizationUrl.searchParams.set('request_uri', parData.request_uri)
+
 console.log('Code verifier:', code_verifier)
 console.log('Redirect user to:', authorizationUrl.href)
-// Now redirect the user to authorizationUrl.href
