@@ -193,7 +193,7 @@ To run the CLI against this environment (self-signed certificates, local ports):
 CLI_PUBLIC_SERVER=https://localhost:8000 \
 CLI_PROTECTED_RESOURCE_URL=https://localhost:8010/datasources/... \
 CLI_SKIP_SERVER_VERIFICATION=true \
-cli get_code.ts
+npm run get_code
 ```
 
 Similarly for the callback server:
@@ -202,10 +202,26 @@ Similarly for the callback server:
 CLI_PUBLIC_SERVER=https://localhost:8000 \
 CLI_PROTECTED_RESOURCE_URL=https://localhost:8010/datasources/... \
 CLI_SKIP_SERVER_VERIFICATION=true \
-cli npx tsx callback_server.ts
+npm run start
 ```
 
 An alternative to skipping verification for self signed certificates is to supply a bundle for the self signed server certificate via CLI_SERVER_CA_PATH. 
+
+Alternatively, to run against the demo apps:
+
+```
+CLI_PUBLIC_SERVER=https://preprod.mtls.perseus-demo-authentication.ib1.org \
+CLI_PROTECTED_RESOURCE_URL=https://preprod.mtls.perseus-demo-energy.ib1.org/datasources/id/measure?from=2024-12-05T00:00:00Z&to=2024-12-06T00:00:00Z \
+cli get_code.ts
+```
+
+Similarly for the callback server:
+
+```
+CLI_PUBLIC_SERVER=https://preprod.mtls.perseus-demo-authentication.ib1.org \
+CLI_PROTECTED_RESOURCE_URL=https://preprod.mtls.perseus-demo-energy.ib1.org/datasources/id/measure?from=2024-12-05T00:00:00Z&to=2024-12-06T00:00:00Z \
+cli npx tsx callback_server.ts
+```
 
 ### Example 
 
