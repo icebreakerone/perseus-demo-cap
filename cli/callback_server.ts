@@ -3,13 +3,14 @@ import * as client from 'openid-client'
 import { readFileSync } from 'fs'
 
 import { clientConfig as clientConfigPromise, customFetch } from './customFetch'
+import { config } from './config'
 
 const app = express()
 const port = 3000
 
 app.get('/callback', async (req, res) => {
   const authorizationCode = req.query.code as string
-
+  console.error('Query parameters:', req.query)
   if (!authorizationCode)
     return res.status(400).send('Missing authorization code.')
 
@@ -113,7 +114,67 @@ app.get('/callback', async (req, res) => {
     }
 
     const jsonData = await dataResponse.json()
-
+    // console.log('Data from data server:', jsonData)
+    // Decode the provenance record
+    const decodedProvenance = await fetch(
+      new URL('/api/v1/decode', config.provenanceServiceUrl),
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jsonData['provenance']),
+      },
+    )
+    console.log('Decoded provenance:', decodedProvenance.json())
+    // Test provenance service endpoint
+    const capRecordRequest = {
+      edp_data_attachment: jsonData['provenance'],
+      // Must match the 'to' field in the EDP transfer step
+      cap_member_id: 'https://member.core.sandbox.trust.ib1.org/a/s2914npr',
+      // Placeholder – not currently used in provenance-service matching logic
+      bank_member_id: 'bank-member-456',
+      cap_account: 'cap-account-789',
+      cap_permission_granted: new Date().toISOString(),
+      cap_permission_expires: new Date(
+        Date.now() + 1000 * 60 * 60 * 24 * 30,
+      ).toISOString(),
+      grid_intensity_origin: 'https://example.com/grid-intensity-origin',
+      grid_intensity_license: 'https://example.com/grid-intensity-license',
+      postcode: 'AB12CD',
+      // Must match the 'service' field in the EDP transfer step
+      edp_service_url:
+        'https://preprod.perseus-demo-energy.ib1.org/datasources/id/measure',
+      // Must match the member URL from the EDP signing certificate
+      edp_member_id: 'https://member.core.sandbox.trust.ib1.org/m/7a1qv915',
+      // Placeholder – not currently used in provenance-service matching logic
+      bank_service_url: 'https://example.com/bank-service-url',
+      // Must match the metering period in the EDP transfer step
+      from_date: '2024-12-05',
+      to_date: '2024-12-06',
+    }
+    console.log(
+      'Signing cap record with provenance service:',
+      jsonData['provenance'],
+    )
+    const capRecordEncoded = await fetch(
+      new URL('/api/v1/sign/cap', config.provenanceServiceUrl),
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(capRecordRequest),
+      },
+    )
+    console.log('Cap record encoded:', capRecordEncoded)
+    if (!capRecordEncoded.ok) {
+      const errorText = await capRecordEncoded.text()
+      console.error(
+        `Error signing cap record: ${capRecordEncoded.status} ${capRecordEncoded.statusText}`,
+      )
+      return res.status(500).send(`Error signing cap record: ${errorText}`)
+    }
+    const capRecordData = await capRecordEncoded.json()
+    console.log('Cap record data:', capRecordData)
     console.log(
       'Testing permissions with refresh token:',
       tokenData.refresh_token,

@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import TypedDict, Optional
 
 
 class Context(TypedDict):
@@ -6,3 +6,4 @@ class Context(TypedDict):
     domain: str
     hosted_zone_name: str
     auth_domain: str
+    provenance_domain: Optional[str]  # Optional domain for provenance service
