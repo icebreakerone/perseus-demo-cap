@@ -137,7 +137,7 @@ export const initializeClientConfig = async (
     mtlsBundle: certificates.mtlsBundle,
     caBundle: certificates.caBundle,
     scope:
-      'https://registry.core.pilot.trust.ib1.org/scheme/perseus/license/energy-consumption-data/2024-12-05+offline_access',
+      'https://registry.core.sandbox.trust.ib1.org/scheme/perseus/license/energy-consumption-data/2024-12-05+offline_access',
     response_type: 'code',
     grant_type: 'authorization_code',
     post_login_route: process.env.NEXT_PUBLIC_REDIRECT_URL as string,
@@ -183,7 +183,10 @@ export const createCustomFetch = async (config?: IClientConfig) => {
     },
   })
 
-  return async (url: string | URL, options: undici.RequestOptions = {}) => {
+  return async (
+    url: string | URL,
+    options: Parameters<typeof undici.fetch>[1] = {},
+  ) => {
     return undici.fetch(url, {
       ...options,
       dispatcher: agent,

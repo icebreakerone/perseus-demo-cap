@@ -29,6 +29,14 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
+## Development with docker
+
+For work requiring the provenance service a development environment can be run with 
+
+```bash
+docker compose up
+```
+
 ## Certificates and keys
 
 The app requires the following certificates and keys:

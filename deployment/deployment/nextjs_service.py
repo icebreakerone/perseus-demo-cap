@@ -16,6 +16,7 @@ class NextJsService(Construct):
         self,
         scope: Construct,
         id: str,
+        cluster: ecs.Cluster,
         vpc: ec2.Vpc,
         secrets_policy: iam.ManagedPolicy,
         environment: dict,
@@ -27,13 +28,6 @@ class NextJsService(Construct):
         **kwargs
     ):
         super().__init__(scope, id, **kwargs)
-
-        # Create ECS Cluster
-        cluster = ecs.Cluster(self, "CapNextJsAppCluster", vpc=vpc)
-
-        # Add tags to ECS cluster
-        Tags.of(cluster).add("ResourceType", "ecs-cluster")
-        Tags.of(cluster).add("Purpose", "application-hosting")
 
         # Define the Fargate service with ALB
         fargate_service = ecs_patterns.ApplicationLoadBalancedFargateService(
@@ -62,14 +56,6 @@ class NextJsService(Construct):
             ),
             certificate=certificate,
         )
-
-        # Add tags to ALB and ECS service
-        Tags.of(fargate_service.load_balancer).add("ResourceType", "alb")
-        Tags.of(fargate_service.load_balancer).add(
-            "Purpose", "application-load-balancing"
-        )
-        Tags.of(fargate_service.service).add("ResourceType", "ecs-service")
-        Tags.of(fargate_service.service).add("Purpose", "nextjs-application")
 
         # Configure health check path
         fargate_service.target_group.configure_health_check(path="/")
