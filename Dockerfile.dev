@@ -1,0 +1,26 @@
+# syntax=docker.io/docker/dockerfile:1
+ARG ENV=preprod
+FROM node:22-alpine AS base
+
+
+FROM base  AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install dependencies based on the preferred package manager
+COPY package.json package-lock.json* ./
+RUN npm i
+
+
+FROM base AS builder
+ARG ENV
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+COPY .env.${ENV} .env.production
+
+
+EXPOSE 3000
+
+ENV PORT=3000
+CMD ["npm", "run", "dev"]

@@ -1,4 +1,8 @@
-from aws_cdk import aws_ec2 as ec2, Tags
+from aws_cdk import (
+    aws_ec2 as ec2,
+    aws_servicediscovery as servicediscovery,
+    Tags,
+)
 from constructs import Construct
 
 
@@ -33,3 +37,15 @@ class NetworkConstruct(Construct):
         # Add specific tags to security group
         Tags.of(self.ecs_sg).add("ResourceType", "security-group")
         Tags.of(self.ecs_sg).add("Purpose", "ecs-traffic-control")
+
+        # Create Cloud Map namespace for service discovery (internal services)
+        self.service_discovery_namespace = servicediscovery.PrivateDnsNamespace(
+            self,
+            "ServiceDiscoveryNamespace",
+            name=f"perseus-cap-{environment_name}.local",
+            vpc=self.vpc,
+            description=f"Service discovery namespace for {environment_name} environment",
+        )
+
+        Tags.of(self.service_discovery_namespace).add("ResourceType", "service-discovery-namespace")
+        Tags.of(self.service_discovery_namespace).add("Purpose", "internal-service-discovery")
