@@ -5,7 +5,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "get_code": "npx tsx get_code.ts",
-    "start": "npx tsx callback_server.ts"
+    "start": "npx tsx callback_server.ts",
+    "start:provenance": "ENABLE_PROVENANCE=true npx tsx callback_server.ts"
   },
   "keywords": [],
   "author": "",

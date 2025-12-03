@@ -237,13 +237,19 @@ The following runs the flow against preproduction (no extra flags required):
 
 ```
 cd cli
-npx tsx get_code.ts
+npm run get_code
 ```
 
 Start the callback server in a separate terminal and complete the login through the browser when prompted:
 
 ```
 cd cli
-npx tsx callback_server.ts
+npm run start
 ```
 
+If you wish to test signing of provenance records as well as authentication and retrieving data, run:
+
+```
+cd cli
+npm run start:provenance
+```
