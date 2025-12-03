@@ -27,7 +27,7 @@
     "iron-session": "^8.0.4",
     "mailgo": "^0.12.2",
     "negotiator": "^0.6.3",
-    "next": "^15.2.2",
+    "next": "^15.5.7",
     "nodemailer": "^6.9.4",
     "openid-client": "^6.3.3",
     "postcss": "^8.4.27",
