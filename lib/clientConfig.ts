@@ -173,13 +173,20 @@ export const createCustomFetch = async (config?: IClientConfig) => {
   console.log('Creating undici agent with certificates:')
   console.log('Key length:', clientConfig.mtlsKey.length)
   console.log('Cert length:', clientConfig.mtlsBundle.length)
+  console.log(
+    'skipServerVerification:',
+    clientConfig.skipServerVerification ?? false,
+  )
+
+  const rejectUnauthorized = !(clientConfig.skipServerVerification ?? false)
+  console.log('Setting rejectUnauthorized to:', rejectUnauthorized)
 
   const agent = new undici.Agent({
     connect: {
       key: clientConfig.mtlsKey,
       cert: clientConfig.mtlsBundle,
       ca: clientConfig.caBundle,
-      rejectUnauthorized: !(clientConfig.skipServerVerification ?? false),
+      rejectUnauthorized,
     },
   })
 
