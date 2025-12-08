@@ -27,6 +27,15 @@ const certificateOverrides = {
   skipServerVerification: config.skipServerVerification,
 }
 
+console.log(
+  'CLI_SKIP_SERVER_VERIFICATION:',
+  process.env.CLI_SKIP_SERVER_VERIFICATION,
+)
+console.log(
+  'skipServerVerification config value:',
+  config.skipServerVerification,
+)
+
 const clientConfigPromise = initializeClientConfig({
   server: config.publicServer,
   client_id: config.clientId,

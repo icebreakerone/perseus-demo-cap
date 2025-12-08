@@ -84,10 +84,10 @@ app.get('/callback', async (req, res) => {
     console.log('Access Token:', tokenData.access_token)
 
     console.log(
-      'Fetching data from data server:',
+      'Fetching meter data from data server:',
       resolvedClientConfig.protectedResourceUrl.href,
     )
-    const dataResponse = await customFetch(
+    const meterDataResponse = await customFetch(
       resolvedClientConfig.protectedResourceUrl,
       {
         method: 'GET',
@@ -98,23 +98,65 @@ app.get('/callback', async (req, res) => {
       },
     )
 
-    if (!dataResponse.ok) {
-      const errorText = await dataResponse.text()
+    if (!meterDataResponse.ok) {
+      const errorText = await meterDataResponse.text()
       console.error(
-        `Error fetching data from data server: ${dataResponse.status} ${dataResponse.statusText}`,
-      )
-      console.error(
-        'Response headers:',
-        Object.fromEntries(dataResponse.headers),
+        `Error fetching data from data server: ${meterDataResponse.status} ${meterDataResponse.statusText}`,
       )
       console.error('Response body:', errorText)
       return res
         .status(500)
         .send(`Error fetching data from data server: ${errorText}`)
     }
+    const meterData = await meterDataResponse.json()
+    console.log('Meter data:', meterData)
 
-    const jsonData = await dataResponse.json()
+    // meterData.data is an array, so we need to access the first element
+    if (
+      !meterData.data ||
+      !Array.isArray(meterData.data) ||
+      meterData.data.length === 0
+    ) {
+      return res.status(500).send('No meter data available')
+    }
 
+    const firstMeter = meterData.data[0]
+    if (
+      !firstMeter.availableMeasures ||
+      !Array.isArray(firstMeter.availableMeasures) ||
+      firstMeter.availableMeasures.length === 0
+    ) {
+      return res.status(500).send('No available measures for meter')
+    }
+
+    console.log('Available measures:', firstMeter.availableMeasures)
+    const meterId = firstMeter.id
+    const meterMeasure = firstMeter.availableMeasures[0]
+    console.log('Request data for meter:', meterId, meterMeasure)
+    const dataResponse = await customFetch(
+      new URL(
+        `/datasources/${meterId}/${meterMeasure}?from=2024-12-05&to=2024-12-06`,
+        resolvedClientConfig.protectedResourceUrl,
+      ),
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`,
+          Accept: 'application/json',
+        },
+      },
+    )
+    if (!dataResponse.ok) {
+      const errorText = await dataResponse.text()
+      console.error(
+        `Error fetching data from data server: ${dataResponse.status} ${dataResponse.statusText}`,
+      )
+      console.error('Response body:', errorText)
+      return res
+        .status(500)
+        .send(`Error fetching data from data server: ${errorText}`)
+    }
+    const data = await dataResponse.json()
     // Only run provenance-related code if ENABLE_PROVENANCE flag is set
     if (process.env.ENABLE_PROVENANCE === 'true') {
       const decodedProvenance = await fetch(
@@ -122,13 +164,13 @@ app.get('/callback', async (req, res) => {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(jsonData['provenance']),
+          body: JSON.stringify(data['provenance']),
         },
       )
       console.log('Decoded provenance:', decodedProvenance.json())
       // Test provenance service endpoint
       const capRecordRequest = {
-        edp_data_attachment: jsonData['provenance'],
+        edp_data_attachment: data['provenance'],
         // Must match the 'to' field in the EDP transfer step
         cap_member_id: 'https://member.core.sandbox.trust.ib1.org/a/s2914npr',
         // Placeholder – not currently used in provenance-service matching logic
@@ -154,7 +196,7 @@ app.get('/callback', async (req, res) => {
       }
       console.log(
         'Signing cap record with provenance service:',
-        jsonData['provenance'],
+        data['provenance'],
       )
       const capRecordEncoded = await fetch(
         new URL('/api/v1/sign/cap', config.provenanceServiceUrl),
@@ -204,7 +246,7 @@ app.get('/callback', async (req, res) => {
 
     const permissionsData = await permissionsResponse.json()
     console.log('Permissions data:', permissionsData)
-    res.json(jsonData)
+    res.json(data)
   } catch (error) {
     console.error('Error during token exchange:', error)
     res.status(500).send('Error during token exchange')
