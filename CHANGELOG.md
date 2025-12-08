@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.1.1] - 2025-12-08
+
+### Added
+
+- 
+
+### Changed
+
+- cli flow uses the datasources endpoint to retrieve meters and construct data fetching url
+- Change the client ID to a valid directory organisation uri
+
+### Fixed
+
+- 
+
+### Breaking
+
+-
+
 ## [v1.1.0] - 2025-12-03
 
 ### Added
