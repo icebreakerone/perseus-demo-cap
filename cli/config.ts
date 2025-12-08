@@ -19,7 +19,7 @@ export const config = {
     process.env.CLI_SKIP_SERVER_VERIFICATION === 'true' || '1' || 'yes',
   protectedResourceUrl: new URL(
     process.env.CLI_PROTECTED_RESOURCE_URL ??
-      'https://preprod.mtls.perseus-demo-energy.ib1.org/datasources/', //'https://localhost:8010/datasources/id/measure?from=2024-12-05T00:00:00Z&to=2024-12-06T00:00:00Z'
+      'https://preprod.mtls.perseus-demo-energy.ib1.org/datasources/', //'https://localhost:8010/datasources/'
   ),
   provenanceServiceUrl: new URL(
     process.env.CLI_PROVENANCE_SERVICE_URL ?? 'http://localhost:8081',
