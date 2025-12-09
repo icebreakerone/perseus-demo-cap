@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## [v1.1.2] - 2025-12-09
+
+### Added
+
+- 
+
+### Changed
+
+- 
+
+### Fixed
+
+- Upgrade nextjs
+
+### Breaking
+
+-
+
+
+
 ## [v1.1.1] - 2025-12-08
 
 ### Added
