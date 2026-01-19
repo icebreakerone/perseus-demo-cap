@@ -176,20 +176,19 @@ export const createCustomFetch = async (config?: IClientConfig) => {
     /-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g,
   )
 
-  if (!certMatches || certMatches.length === 0) {
+  if (!certMatches || certMatches.length === 0)
     throw new Error('No certificates found in mtlsBundle')
-  }
 
   // For mTLS client authentication with undici:
   // - 'cert' can be a string (concatenated certs) or array of cert strings
   // - The client certificate (first cert) must be present
   // - Intermediate CAs can be included in the chain
   // Try as array first, fallback to concatenated string
-  const certArray = certMatches.map((cert) => cert.trim())
+  const certArray = certMatches.map(cert => cert.trim())
   const certBundle = certArray.join('\n')
 
   // Debug: verify we have the client cert
-  if (certMatches.length > 0) {
+  if (certMatches.length > 0)
     try {
       const clientCert = new X509Certificate(certMatches[0])
       const cnMatch = clientCert.subject.match(/CN=([^,]+)/)
@@ -199,7 +198,6 @@ export const createCustomFetch = async (config?: IClientConfig) => {
     } catch (e) {
       console.warn(`[mTLS] Could not parse client certificate: ${e}`)
     }
-  }
 
   const agent = new undici.Agent({
     connect: {
@@ -217,9 +215,8 @@ export const createCustomFetch = async (config?: IClientConfig) => {
   ) => {
     const urlObj = typeof url === 'string' ? new URL(url) : url
     // Log mTLS usage for debugging (only for mTLS endpoints)
-    if (urlObj.hostname.includes('mtls.')) {
+    if (urlObj.hostname.includes('mtls.'))
       console.log(`[mTLS] Making request to: ${urlObj.href}`)
-    }
     return undici.fetch(url, {
       ...options,
       dispatcher: agent,
