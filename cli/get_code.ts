@@ -9,24 +9,7 @@ const discoveryUrl = new URL(
   resolvedClientConfig.server,
 )
 
-console.log(`Fetching metadata from: ${discoveryUrl.href}`)
 const originalFetch = globalThis.fetch
-globalThis.fetch = customFetch as typeof fetch
-const discoveryResponse = await customFetch(discoveryUrl)
-
-if (!discoveryResponse.ok) {
-  console.error(
-    `Error fetching discovery document: ${discoveryResponse.status} ${discoveryResponse.statusText}`,
-  )
-  console.error(await discoveryResponse.text())
-}
-
-globalThis.fetch = originalFetch
-
-const discoveryJson = await discoveryResponse.json()
-console.log('Raw discovery document:', discoveryJson)
-
-console.log(`Discovering issuer at: ${resolvedClientConfig.server.href}`)
 let issuer: client.Configuration
 try {
   globalThis.fetch = customFetch as typeof fetch
@@ -40,16 +23,16 @@ try {
 } finally {
   globalThis.fetch = originalFetch
 }
-
-console.log('Discovered issuer:', issuer)
-console.log(issuer.serverMetadata())
+console.log('--------------------------------')
+console.log(`Loading ${discoveryUrl.href}`)
+console.log(`✅ Discovery successful`)
 
 const code_verifier = client.randomPKCECodeVerifier()
 const code_challenge = await client.calculatePKCECodeChallenge(code_verifier)
 
 // In production this would be persisted securely. For the CLI we store it locally for the callback step.
 writeFileSync('code_verifier.txt', code_verifier)
-
+console.log(`✅ Code verifier written to code_verifier.txt`)
 const parameters: Record<string, string> = {
   client_id: resolvedClientConfig.client_id,
   redirect_uri: resolvedClientConfig.redirect_uri,
@@ -62,7 +45,7 @@ const parameters: Record<string, string> = {
 const parEndpoint =
   issuer.serverMetadata().pushed_authorization_request_endpoint
 if (!parEndpoint) throw new Error('Authorization endpoint is undefined')
-
+console.log(`Sending PAR request to ${parEndpoint}`)
 const parResponse = await customFetch(parEndpoint, {
   method: 'POST',
   headers: {
@@ -80,7 +63,7 @@ if (!parResponse.ok) {
 }
 
 const parData = await parResponse.json()
-console.log('PAR Response:', parData)
+console.log('✅ PAR Response received with request_uri:', parData.request_uri)
 
 const authorizationEndpoint = issuer.serverMetadata().authorization_endpoint
 if (!authorizationEndpoint)
@@ -89,6 +72,6 @@ if (!authorizationEndpoint)
 const authorizationUrl = new URL(authorizationEndpoint)
 authorizationUrl.searchParams.set('client_id', resolvedClientConfig.client_id)
 authorizationUrl.searchParams.set('request_uri', parData.request_uri)
-
-console.log('Code verifier:', code_verifier)
-console.log('Redirect user to:', authorizationUrl.href)
+console.log('--------------------------------')
+console.log('🔗 Open this URL to authorize:')
+console.log(authorizationUrl.href)

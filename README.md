@@ -2,6 +2,10 @@
 
 A simple web application showing the perseus authentication and authorisation flow. The authorisation code flow is Fapi 2.0 compliant. Client requests are protected by mutual TLS. A [cli showing the same flow](cli/README.md) is available in the cli directory, and may be useful for members developing their own integrations.
 
+## Testing Perseus EDP implementations
+
+The cli can be used to test conformance of a Perseus EDP implementation. See [edp_checks.md](edp_checks.md) for details.
+
 ## Next app
 
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
@@ -49,6 +53,10 @@ All keys and certificates are in PEM format.
 The client key and bundle are used for mutual TLS. 
 
 For local development, these are local files. In production, these are stored in AWS Secrets Manager.
+
+### Using KMS keys
+
+The deployed provenance service creates a KMS key suitable for signing. See https://github.com/icebreakerone/provenance-service?tab=readme-ov-file#kms-key-setup for details of generating certificates from a kms key.
 
 ### Verifying Certificates and Keys
 
