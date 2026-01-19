@@ -62,7 +62,7 @@ The cli uses two scripts, get_code which generates an authorisation url, and cal
 
 Start by running the call back server:
 
-``bash
+```bash
 npm run start
 ```
 
