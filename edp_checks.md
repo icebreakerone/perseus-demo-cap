@@ -60,7 +60,7 @@ CLI_SERVER_CA_PATH=../certs/cap-demo-certs/cap-demo-key.pem # Only required if C
 
 The cli uses two scripts, get_code which generates an authorisation url, and callback_server which receives the authorisation code, exchanges it for a token, uses the token to retrieve data from the protected endpoint, and finally requests the permission record from the authentication server.
 
-Start by running the call back server:
+Start by running the callback server:
 
 ```bash
 npm run start
@@ -82,7 +82,7 @@ Successfully loaded certificates from local files
 Waiting for authorization callback...
 ```
 
-In another terminal screen, run `npm run get_code` to generate an authorisation URL using tghe configured `CLI_PUBLIC_SERVER`:
+In another terminal screen, run `npm run get_code` to generate an authorisation URL using the configured `CLI_PUBLIC_SERVER`:
 
 ```
 ...
@@ -98,7 +98,7 @@ Sending PAR request to https://mtls.perseus-demo-authentication.ib1.org/api/v1/p
 https://perseus-demo-authentication.ib1.org/api/v1/authorize?client_id=https%3A%2F%2Fdirectory.core.sandbox.trust.ib1.org%2Fa%2Fjh7ujmiy&request_uri=urn%3Aietf%3Aparams%3Aoauth%3Arequest_uri%3A3UTfZdDialMBmTXn_jxr6fcBKnU
 ```
 
-Open the generated url and complete authorisation and granting permissions. A successful authorisation will redirect to the callback server, which will exchange the authorisation code and request data from the configured `CLI_PROTECTED_RESOURCE_URL`. The response will be displayed in the browser, eg.
+Open the generated URL and complete authorisation and granting permissions. A successful authorisation will redirect to the callback server, which will exchange the authorisation code and request data from the configured `CLI_PROTECTED_RESOURCE_URL`. The response will be displayed in the browser, e.g.
 
 ```json
 {
