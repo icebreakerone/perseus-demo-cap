@@ -1,5 +1,6 @@
 import * as undici from 'undici'
 import { readFileSync } from 'fs'
+import { X509Certificate } from 'crypto'
 import {
   GetSecretValueCommand,
   SecretsManagerClient,
@@ -113,7 +114,6 @@ export const initializeClientConfig = async (
 
   if (isLocalEnv())
     try {
-      console.log('Attempting to load certificates from local filesystem')
       certificates = loadCertificatesFromLocal(overrides)
       console.log('Successfully loaded certificates from local files')
     } catch (error) {
@@ -169,23 +169,42 @@ export const getClientConfigPromise = () => {
 
 export const createCustomFetch = async (config?: IClientConfig) => {
   const clientConfig = config ?? (await getClientConfigPromise())
+  const rejectUnauthorized = !(clientConfig.skipServerVerification ?? false)
 
-  console.log('Creating undici agent with certificates:')
-  console.log('Key length:', clientConfig.mtlsKey.length)
-  console.log('Cert length:', clientConfig.mtlsBundle.length)
-  console.log(
-    'skipServerVerification:',
-    clientConfig.skipServerVerification ?? false,
+  // Extract certificates from bundle - split by certificate boundaries
+  const certMatches = clientConfig.mtlsBundle.match(
+    /-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g,
   )
 
-  const rejectUnauthorized = !(clientConfig.skipServerVerification ?? false)
-  console.log('Setting rejectUnauthorized to:', rejectUnauthorized)
+  if (!certMatches || certMatches.length === 0)
+    throw new Error('No certificates found in mtlsBundle')
+
+  // For mTLS client authentication with undici:
+  // - 'cert' can be a string (concatenated certs) or array of cert strings
+  // - The client certificate (first cert) must be present
+  // - Intermediate CAs can be included in the chain
+  // Try as array first, fallback to concatenated string
+  const certArray = certMatches.map(cert => cert.trim())
+  const certBundle = certArray.join('\n')
+
+  // Debug: verify we have the client cert
+  if (certMatches.length > 0)
+    try {
+      const clientCert = new X509Certificate(certMatches[0])
+      const cnMatch = clientCert.subject.match(/CN=([^,]+)/)
+      const subjectCN = cnMatch ? cnMatch[1] : 'unknown'
+      console.log(`[mTLS] Client certificate CN: ${subjectCN}`)
+      console.log(`[mTLS] Bundle contains ${certMatches.length} certificate(s)`)
+    } catch (e) {
+      console.warn(`[mTLS] Could not parse client certificate: ${e}`)
+    }
 
   const agent = new undici.Agent({
     connect: {
-      key: clientConfig.mtlsKey,
-      cert: clientConfig.mtlsBundle,
-      ca: clientConfig.caBundle,
+      key: clientConfig.mtlsKey.trim(),
+      // Use concatenated string format - ensure proper newline separation
+      cert: certBundle,
+      ca: clientConfig.caBundle?.trim(),
       rejectUnauthorized,
     },
   })
@@ -194,6 +213,10 @@ export const createCustomFetch = async (config?: IClientConfig) => {
     url: string | URL,
     options: Parameters<typeof undici.fetch>[1] = {},
   ) => {
+    const urlObj = typeof url === 'string' ? new URL(url) : url
+    // Log mTLS usage for debugging (only for mTLS endpoints)
+    if (urlObj.hostname.includes('mtls.'))
+      console.log(`[mTLS] Making request to: ${urlObj.href}`)
     return undici.fetch(url, {
       ...options,
       dispatcher: agent,

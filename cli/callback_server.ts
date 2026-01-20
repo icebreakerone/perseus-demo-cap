@@ -10,7 +10,6 @@ const port = 3000
 
 app.get('/callback', async (req, res) => {
   const authorizationCode = req.query.code as string
-  console.error('Query parameters:', req.query)
   if (!authorizationCode)
     return res.status(400).send('Missing authorization code.')
 
@@ -21,12 +20,11 @@ app.get('/callback', async (req, res) => {
     return res.status(500).send('Failed to read code_verifier from file.')
   }
 
-  console.log('Authorization code:', authorizationCode)
-  console.log('PKCE Code Verifier:', codeVerifier)
+  console.log('--------------------------------')
+  console.log('✅ Authorization code received')
 
   const resolvedClientConfig = await clientConfigPromise
 
-  console.log(`Discovering issuer at: ${resolvedClientConfig.server.href}`)
   const originalFetch = globalThis.fetch
   let issuer: client.Configuration
   try {
@@ -44,7 +42,7 @@ app.get('/callback', async (req, res) => {
   } finally {
     globalThis.fetch = originalFetch
   }
-  console.log('Discovered issuer:', issuer)
+  console.log('✅ Discovery successful')
 
   const tokenEndpoint = issuer.serverMetadata().token_endpoint
 
@@ -53,8 +51,8 @@ app.get('/callback', async (req, res) => {
       .status(500)
       .send('Token endpoint is not available in the issuer metadata.')
 
-  console.log('Token endpoint:', tokenEndpoint)
-
+  console.log('🔄 Exchanging authorization code for access token')
+  console.log(`Token endpoint: ${tokenEndpoint}`)
   const body = new URLSearchParams({
     code: authorizationCode,
     client_id: resolvedClientConfig.client_id,
@@ -81,14 +79,13 @@ app.get('/callback', async (req, res) => {
     }
 
     const tokenData = await tokenResponse.json()
-    console.log('Access Token:', tokenData.access_token)
+    console.log('✅ Access token received')
 
     console.log(
-      'Fetching meter data from data server:',
-      resolvedClientConfig.protectedResourceUrl.href,
+      `Meter catalog URL: ${resolvedClientConfig.protectedResourceUrl}/datasources/`,
     )
     const meterDataResponse = await customFetch(
-      resolvedClientConfig.protectedResourceUrl,
+      new URL('/datasources/', resolvedClientConfig.protectedResourceUrl),
       {
         method: 'GET',
         headers: {
@@ -103,13 +100,12 @@ app.get('/callback', async (req, res) => {
       console.error(
         `Error fetching data from data server: ${meterDataResponse.status} ${meterDataResponse.statusText}`,
       )
-      console.error('Response body:', errorText)
       return res
         .status(500)
         .send(`Error fetching data from data server: ${errorText}`)
     }
     const meterData = await meterDataResponse.json()
-    console.log('Meter data:', meterData)
+    console.log('✅ Meter catalog received')
 
     // meterData.data is an array, so we need to access the first element
     if (
@@ -129,10 +125,9 @@ app.get('/callback', async (req, res) => {
       return res.status(500).send('No available measures for meter')
     }
 
-    console.log('Available measures:', firstMeter.availableMeasures)
     const meterId = firstMeter.id
     const meterMeasure = firstMeter.availableMeasures[0]
-    console.log('Request data for meter:', meterId, meterMeasure)
+    console.log(`📈 Fetching data for meter ${meterId} (${meterMeasure})`)
     const dataResponse = await customFetch(
       new URL(
         `/datasources/${meterId}/${meterMeasure}?from=2024-12-05&to=2024-12-06`,
@@ -151,14 +146,15 @@ app.get('/callback', async (req, res) => {
       console.error(
         `Error fetching data from data server: ${dataResponse.status} ${dataResponse.statusText}`,
       )
-      console.error('Response body:', errorText)
       return res
         .status(500)
         .send(`Error fetching data from data server: ${errorText}`)
     }
     const data = await dataResponse.json()
+    console.log('✅ Meter data received')
     // Only run provenance-related code if ENABLE_PROVENANCE flag is set
     if (process.env.ENABLE_PROVENANCE === 'true') {
+      console.log('🔐 Processing provenance data')
       const decodedProvenance = await fetch(
         new URL('/api/v1/decode', config.provenanceServiceUrl),
         {
@@ -167,7 +163,6 @@ app.get('/callback', async (req, res) => {
           body: JSON.stringify(data['provenance']),
         },
       )
-      console.log('Decoded provenance:', decodedProvenance.json())
       // Test provenance service endpoint
       const capRecordRequest = {
         edp_data_attachment: data['provenance'],
@@ -194,10 +189,7 @@ app.get('/callback', async (req, res) => {
         from_date: '2024-12-05',
         to_date: '2024-12-06',
       }
-      console.log(
-        'Signing cap record with provenance service:',
-        data['provenance'],
-      )
+      console.log('✍️  Signing CAP record with provenance service')
       const capRecordEncoded = await fetch(
         new URL('/api/v1/sign/cap', config.provenanceServiceUrl),
         {
@@ -208,7 +200,6 @@ app.get('/callback', async (req, res) => {
           body: JSON.stringify(capRecordRequest),
         },
       )
-      console.log('Cap record encoded:', capRecordEncoded)
       if (!capRecordEncoded.ok) {
         const errorText = await capRecordEncoded.text()
         console.error(
@@ -216,17 +207,16 @@ app.get('/callback', async (req, res) => {
         )
         return res.status(500).send(`Error signing cap record: ${errorText}`)
       }
+      console.log('✅ CAP record signed')
     }
-    console.log(
-      'Testing permissions with refresh token:',
-      tokenData.refresh_token,
-    )
+    console.log('🔍 Testing permissions with refresh token')
     const permissionsBody = new URLSearchParams({
       token: tokenData.refresh_token,
     })
 
+    console.log('Requesting permissions from:', config.mtlsAuthorisationServer)
     const permissionsResponse = await customFetch(
-      new URL('/api/v1/permissions', resolvedClientConfig.server),
+      new URL('/api/v1/permissions', config.mtlsAuthorisationServer),
       {
         method: 'POST',
         headers: {
@@ -245,7 +235,9 @@ app.get('/callback', async (req, res) => {
     }
 
     const permissionsData = await permissionsResponse.json()
-    console.log('Permissions data:', permissionsData)
+    console.log('✅ Permissions verified')
+    console.log('--------------------------------')
+    console.log('✅ All steps completed successfully')
     res.json(data)
   } catch (error) {
     console.error('Error during token exchange:', error)
@@ -254,5 +246,7 @@ app.get('/callback', async (req, res) => {
 })
 
 app.listen(port, () => {
-  console.info(`Server is running on http://localhost:${port}`)
+  console.log('--------------------------------')
+  console.log(`🚀 Callback server running on http://localhost:${port}`)
+  console.log('Waiting for authorization callback...')
 })

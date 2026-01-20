@@ -20,21 +20,16 @@ const serverCaBundle = (() => {
   }
 })()
 
+console.log('MTLS key path:', config.mtlsKeyPath)
+console.log('MTLS bundle path:', config.mtlsBundlePath)
+console.log('Server CA bundle path:', config.serverCaPath)
+console.log('Skip server verification:', config.skipServerVerification)
 const certificateOverrides = {
   mtlsKey: readFileSync(config.mtlsKeyPath, 'utf8'),
   mtlsBundle: readFileSync(config.mtlsBundlePath, 'utf8'),
   caBundle: serverCaBundle,
   skipServerVerification: config.skipServerVerification,
 }
-
-console.log(
-  'CLI_SKIP_SERVER_VERIFICATION:',
-  process.env.CLI_SKIP_SERVER_VERIFICATION,
-)
-console.log(
-  'skipServerVerification config value:',
-  config.skipServerVerification,
-)
 
 const clientConfigPromise = initializeClientConfig({
   server: config.publicServer,

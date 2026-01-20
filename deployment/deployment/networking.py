@@ -28,15 +28,7 @@ class NetworkConstruct(Construct):
             ],
         )
 
-        # Add specific tags to VPC
-        Tags.of(self.vpc).add("ResourceType", "vpc")
-        Tags.of(self.vpc).add("Purpose", "application-networking")
-
         self.ecs_sg = ec2.SecurityGroup(self, f"{environment_name}-EcsSG", vpc=self.vpc)
-
-        # Add specific tags to security group
-        Tags.of(self.ecs_sg).add("ResourceType", "security-group")
-        Tags.of(self.ecs_sg).add("Purpose", "ecs-traffic-control")
 
         # Create Cloud Map namespace for service discovery (internal services)
         self.service_discovery_namespace = servicediscovery.PrivateDnsNamespace(
@@ -46,6 +38,3 @@ class NetworkConstruct(Construct):
             vpc=self.vpc,
             description=f"Service discovery namespace for {environment_name} environment",
         )
-
-        Tags.of(self.service_discovery_namespace).add("ResourceType", "service-discovery-namespace")
-        Tags.of(self.service_discovery_namespace).add("Purpose", "internal-service-discovery")

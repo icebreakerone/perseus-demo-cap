@@ -27,8 +27,3 @@ class CertificatesBucket(Construct):
             auto_delete_objects=False,  # Don't auto-delete certificates
             removal_policy=RemovalPolicy.RETAIN,  # Retain certificates
         )
-
-        # Add tags
-        Tags.of(self.bucket).add("ResourceType", "s3-bucket")
-        Tags.of(self.bucket).add("Purpose", "certificate-storage")
-        Tags.of(self.bucket).add("Environment", environment_name)

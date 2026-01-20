@@ -43,3 +43,5 @@ next-env.d.ts
 
 .mypy_cache
 deployment/cdk.context.json
+
+cli/code_verifier.txt
