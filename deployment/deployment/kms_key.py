@@ -1,9 +1,5 @@
-from aws_cdk import (
-    aws_kms as kms,
-    aws_iam as iam,
-    Tags,
-    Aws,
-)
+from aws_cdk import aws_kms as kms, aws_iam as iam, Tags, Aws, CfnOutput
+
 from constructs import Construct
 
 
@@ -45,4 +41,14 @@ class ProvenanceKmsKey(Construct):
                 actions=["kms:*"],
                 resources=["*"],
             )
+        )
+        # Output the Key ARN so other stacks can easily use it
+        self.key_arn = self.key.key_arn
+
+        CfnOutput(
+            self,
+            "ProvenanceSigningKeyArnOutput",
+            value=self.key_arn,
+            description=f"ARN of the Provenance signing key (ECDSA P-256) for {environment_name}",
+            export_name=f"provenance-signing-key-arn-{environment_name}",
         )
