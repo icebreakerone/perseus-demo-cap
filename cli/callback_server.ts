@@ -213,20 +213,10 @@ app.get('/callback', async (req, res) => {
     const permissionsBody = new URLSearchParams({
       token: tokenData.refresh_token,
     })
-    // Permissions endpoint requires mTLS - convert server URL to mTLS endpoint
-    // If server is already mTLS, use it; otherwise convert to mTLS subdomain
-    let permissionsServerUrl: URL
-    if (resolvedClientConfig.server.hostname.includes('mtls.')) {
-      permissionsServerUrl = resolvedClientConfig.server
-    } else {
-      // Convert to mTLS endpoint: https://example.com -> https://mtls.example.com
-      permissionsServerUrl = new URL(resolvedClientConfig.server)
-      permissionsServerUrl.hostname = `mtls.${permissionsServerUrl.hostname}`
-    }
 
-    console.log('Requesting permissions from:', permissionsServerUrl.href)
+    console.log('Requesting permissions from:', config.mtlsAuthorisationServer)
     const permissionsResponse = await customFetch(
-      new URL('/api/v1/permissions', permissionsServerUrl),
+      new URL('/api/v1/permissions', config.mtlsAuthorisationServer),
       {
         method: 'POST',
         headers: {

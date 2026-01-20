@@ -73,14 +73,14 @@ The deployed provenance service creates a KMS key suitable for signing. See http
 
 A cli is available to test endpoints. Running `npm run get_code` will:
 
-- Create a PAR
+- Create a [PAR](https://datatracker.ietf.org/doc/html/rfc9126)
 - Use the PAR to create and display an authorisation URL
 
 Once the url has been used to authorise the request, the callback will be received by the callback server which will:
 
 - exchange the authorisation code for a token
 - use the token to retrieve data from the defined endpoint
-- request the assoicated provenance record and display it in the console
+- request the associated provenance record and display it in the console
 
 The test callback server can be started with `npm run start`.
 

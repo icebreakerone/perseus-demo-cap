@@ -8,7 +8,8 @@ const discoveryUrl = new URL(
   '/.well-known/oauth-authorization-server',
   resolvedClientConfig.server,
 )
-
+console.log('--------------------------------')
+console.log(`Loading ${discoveryUrl.href}`)
 const originalFetch = globalThis.fetch
 let issuer: client.Configuration
 try {
@@ -23,8 +24,7 @@ try {
 } finally {
   globalThis.fetch = originalFetch
 }
-console.log('--------------------------------')
-console.log(`Loading ${discoveryUrl.href}`)
+
 console.log(`✅ Discovery successful`)
 
 const code_verifier = client.randomPKCECodeVerifier()
