@@ -1,6 +1,7 @@
 # Perseus CAP demo
 
-A simple web application showing the perseus authentication and authorisation flow. The authorisation code flow is Fapi 2.0 compliant. Client requests are protected by mutual TLS. 
+A simple NextJS web application showing the perseus authentication and authorisation flow. The authorisation code flow is Fapi 2.0 compliant, and client requests are protected by mutual TLS. A cli is included for testing Perseus endpoints from the command line.
+
 
 ## Table of Contents
 
