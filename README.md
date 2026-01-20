@@ -5,7 +5,6 @@ A simple web application showing the perseus authentication and authorisation fl
 ## Table of Contents
 
 - [Testing Perseus EDP implementations](#testing-perseus-edp-implementations)
-- [Next app](#next-app)
 - [Getting Started](#getting-started)
 - [Development with docker](#development-with-docker)
 - [Certificates and keys](#certificates-and-keys)
@@ -19,9 +18,6 @@ A simple web application showing the perseus authentication and authorisation fl
 
 The cli can be used to test conformance of a Perseus EDP implementation. See [edp_checks.md](edp_checks.md) for details.
 
-## Next app
-
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
 
@@ -70,7 +66,6 @@ For local development, these are local files. In production, these are stored in
 ### Using KMS keys
 
 The deployed provenance service creates a KMS key suitable for signing. See https://github.com/icebreakerone/provenance-service?tab=readme-ov-file#kms-key-setup for details of generating certificates from a kms key.
-
 
 
 ## Using the CLI
