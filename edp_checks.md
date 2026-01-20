@@ -43,6 +43,8 @@ CLI_MTLS_KEY_PATH=../certs/cli-test/j4l5deko-client-key.pem # custom key path
 
 # Public server URL for authentication
 CLI_PUBLIC_SERVER=https://perseus-demo-authentication.ib1.org
+# mTLS authorisation server URL (for permissions endpoint)
+CLI_MTLS_AUTHORISATION_SERVER=https://mtls.perseus-demo-authentication.ib1.org
 # Your sandbox issued application ID
 CLI_CLIENT_ID=https://directory.core.sandbox.trust.ib1.org/a/j4l5deko
 # Your protected data endpoint
