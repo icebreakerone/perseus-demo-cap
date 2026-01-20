@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.1.3] - 2026-01-20
+
+### Added
+
+- Add documentation for using cli as edp checklist
+- Add cli certificate verification script
+
+### Changed
+
+- 
+
+### Fixed
+
+- Configuration issues in cli
+- Minor issues with deployment
+- Improve cli terminal output
+
+### Breaking
+
+-
+
 
 ## [v1.1.2] - 2025-12-09
 
