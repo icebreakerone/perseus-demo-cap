@@ -16,7 +16,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
 
       # Install dependencies
       - name: Install dependencies
@@ -43,11 +43,11 @@ jobs:
       - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
-          python-version: "3.12"
+          python-version: '3.12'
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
-          node-version: "20"
+          node-version: '20'
       - name: Install Python dependencies and CDK
         run: |
           cd deployment
