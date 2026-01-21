@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.2.0] - 2026-01-20
+
+### Added 
+
+- cli script to test refresh token endpoints
+
+### Changed
+
+- Updates edp_checks.md with details of the new script
+- Include refresh token in callback server output
+
+### Fixed
+
+-
+
 ## [v1.1.3] - 2026-01-20
 
 ### Added
