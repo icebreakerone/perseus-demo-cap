@@ -146,7 +146,20 @@ Requesting permissions from: https://mtls.perseus-demo-authentication.ib1.org/
 ✅ Permissions verified
 --------------------------------
 ✅ All steps completed successfully
+--------------------------------
+📋 Refresh Token (for testing refresh_token.ts):
+ory_rt_JC4vcKHQQqLg8t2ET0M0COZz_LoW6KrwtOQtVJaqkDY.Hd8sDsIkXcS6tlhiJiomtN3gQOAmY06GTW1tM7Mze8
+--------------------------------
+💡 To test refresh token, run:
+   npm run refresh_token "ory_rt_JC4vcKHQQqLg8t2PLR80COZz_LoW6KrwtOQtVJaqkDY.Fpt26UxIkXcS6tlhiJiomtN3gQOAmY06GTW1tM7Mze8"
+   or
+   npx tsx refresh_token.ts "ory_rt_JC4vcKHQQqLg8t2ETGY0COZz_LoW6KrwtOQtVJaqkDY.Fpt26UxIkXcS6tlhiJiomtN3gQOAmY06GTW1tM7Mze8"
+--------------------------------
 ```
+
+## Testing refresh token functionality
+
+The callback server, on success, includes details of running a script to exchange a refresh token for an access token.
 
 ## Certificate debugging tool
 

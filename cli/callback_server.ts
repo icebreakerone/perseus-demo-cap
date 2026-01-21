@@ -238,7 +238,20 @@ app.get('/callback', async (req, res) => {
     console.log('✅ Permissions verified')
     console.log('--------------------------------')
     console.log('✅ All steps completed successfully')
-    res.json(data)
+    console.log('--------------------------------')
+    console.log('📋 Refresh Token (for testing refresh_token.ts):')
+    console.log(tokenData.refresh_token)
+    console.log('--------------------------------')
+    console.log('💡 To test refresh token, run:')
+    console.log(`   npm run refresh_token "${tokenData.refresh_token}"`)
+    console.log('   or')
+    console.log(`   npx tsx refresh_token.ts "${tokenData.refresh_token}"`)
+    console.log('--------------------------------')
+    res.json({
+      ...data,
+      refresh_token: tokenData.refresh_token,
+      access_token: tokenData.access_token,
+    })
   } catch (error) {
     console.error('Error during token exchange:', error)
     res.status(500).send('Error during token exchange')
