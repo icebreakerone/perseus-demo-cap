@@ -66,7 +66,9 @@ All keys and certificates are in PEM format.
 
 The client key and bundle are used for mutual TLS. 
 
-For local development, these are local files. In production, these are stored in AWS Secrets Manager.
+For local development, the app uses local files. In production, these are stored in AWS Secrets Manager.
+
+For a guide to creating certificates using the directory see [Generate a testing key and certificate](docs/generate_certificates.md)
 
 ### Using KMS keys
 
