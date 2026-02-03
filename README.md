@@ -6,6 +6,7 @@ A simple NextJS web application showing the perseus authentication and authorisa
 ## Table of Contents
 
 - [Testing Perseus EDP implementations](#testing-perseus-edp-implementations)
+- [Testing Perseus CAP implementations](#testing-perseus-cap-implementations)
 - [Getting Started](#getting-started)
 - [Development with docker](#development-with-docker)
 - [Certificates and keys](#certificates-and-keys)
@@ -17,8 +18,11 @@ A simple NextJS web application showing the perseus authentication and authorisa
 
 ## Testing Perseus EDP implementations
 
-The cli can be used to test conformance of a Perseus EDP implementation. See [edp_checks.md](edp_checks.md) for details.
+The cli can be used to test conformance of a Perseus EDP implementation. See [Testing an EDP using the Cap Demo cli](docs/edp_checks.md) for details.
 
+## Testing Perseus CAP implementations
+
+A guide to testing your CAP implementation is available in [Testing your CAP implementation against Perseus demo endpoints](docs/cap_checks.md)
 
 ## Getting Started
 
