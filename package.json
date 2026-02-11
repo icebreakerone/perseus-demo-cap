@@ -12,7 +12,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.758.0",
+    "@aws-sdk/client-secrets-manager": "^3.987.0",
     "@hookform/resolvers": "^3.3.0",
     "@mdx-js/react": "^2.3.0",
     "@types/negotiator": "^0.6.1",
