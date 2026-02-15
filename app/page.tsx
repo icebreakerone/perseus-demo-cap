@@ -16,6 +16,8 @@ import ViewSelectLender from '@components/views/ViewSelectLender'
 import FormCAPSelectLender from '@components/forms/FormCAPSelectLender'
 import ViewCAPSharingConsent from '@components/views/ViewCAPSharingConsent'
 import FormCAPSharingConsent from '@components/forms/FormCAPSharingConsent'
+import ViewCAPSetupComplete from '@components/views/ViewCAPSetupComplete'
+import FormCAPSetupComplete from '@components/forms/FormCAPSetupComplete'
 
 type TStage =
   | 'loginCAP'
@@ -78,6 +80,15 @@ const Home = () => {
     setModalId(null)
   }
 
+  const handleGotoEDPSelection = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setStageId('selectEDP')
+  }
+  const handleGotoLenderSelection = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setStageId('selectLender')
+  }
+
   /** EDP level */
 
   return (
@@ -106,6 +117,12 @@ const Home = () => {
             <ViewCAPSharingConsent>
               <FormCAPSharingConsent onSubmit={handleConfirmShareConsent} />
             </ViewCAPSharingConsent>
+          )}
+
+          {stageId === 'CAPComplete' && (
+            <ViewCAPSetupComplete>
+              <FormCAPSetupComplete onGotoEDPSelection={handleGotoEDPSelection} onGotoLender={handleGotoLenderSelection} />
+            </ViewCAPSetupComplete>
           )}
         </div>
       </div>
@@ -246,13 +263,15 @@ const Home = () => {
               )}
             </div>
           </div>
-          <span>stageId: {stageId}</span>
-          <span>modalId: {modalId}</span>
-          <span>selectedEDP: {selectedEDP}</span>
-          <span>selectedLender: {selectedLender}</span>
-          <span>sharingConsent: {sharingConsent}</span>
         </div>
       )}
+      <div className="fixed bottom-0 right-0 flex flex-col gap-2 p-8 text-lg text-red-500">
+        <span>stageId: {stageId}</span>
+        <span>modalId: {modalId}</span>
+        <span>selectedEDP: {selectedEDP}</span>
+        <span>selectedLender: {selectedLender}</span>
+        <span>sharingConsent: {sharingConsent}</span>
+      </div>
     </ErrorBoundary>
   )
 }

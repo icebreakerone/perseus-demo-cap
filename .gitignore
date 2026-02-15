@@ -27,8 +27,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env.local
 .env
+.env.local
 
 # vercel
 .vercel
@@ -44,4 +44,4 @@ next-env.d.ts
 .mypy_cache
 deployment/cdk.context.json
 
-cli/code_verifier.txt
+cli/code_verifier.txt!/.env.local.tmpl
