@@ -2,53 +2,25 @@
 
 ## Generate a testing key and certificate
 
-### Create an application and certificate in the sandbox
-
-If your organisation is an EDP you will have access to a test carbon accounting provider (CAP). Ensure you have selected this test organisation before proceeding with the steps below. 
-
-1. Create an application with Carbon Accounting Provider as a claimed role
-![Create application with role](docs/1-create-new-application.png)
-
-2. Click "New client certificate" and copy the csr command
-![Copy csr command](docs/2-create-new-certificate.png)
-
-3. Run the commands locally, creating a key and csr. Paste the csr into the text box ![Paste Generated CSR](docs/3-paste-csr.png)
-
-4. Download the generated certificate, taking note of your application's URI
-![Download Created Certificate](docs/4-download-certificate.png)
-
-5. Download the client CA certificates
-![Download CA certificates](docs/download-ca.png)
-
-### Prepare certificate files
-
-The cli requires two files, the key created above and a bundle of the intermediate client CA certificate and the generated certificate for the application. 
-
-Create the bundle:
-
-```bash
-cat j4l5deko-client-cert.pem intermediate.pem > j4l5deko-client-bundle.pem
-```
-
-Move the two files to a folder accessible to the application. By default the application uses `certs/cap-demo-certs`.
+Follow the instructions in [Generate a testing key and certificate](generate_certificates.md) to create an application and required certificates.
 
 ## Set environment variables
 
-Set the following environment variables with appropriate values in a .env file in the cli/ folder:
+Set the following environment variables with appropriate values for your EDP implementation in a .env file in the cli/ folder:
 
 ```bash
 # .env
 CLI_MTLS_BUNDLE_PATH=../certs/cli-test/j4l5deko-client-bundle.pem # custom certificate path
 CLI_MTLS_KEY_PATH=../certs/cli-test/j4l5deko-client-key.pem # custom key path
 
-# Public server URL for authentication
-CLI_PUBLIC_SERVER=https://perseus-demo-authentication.ib1.org
+# Your public server URL with a .well-known/oauth-authorization-server endpoint
+CLI_PUBLIC_SERVER=<EDP public authorisation server URL>
 # mTLS authorisation server URL (for permissions endpoint)
-CLI_MTLS_AUTHORISATION_SERVER=https://mtls.perseus-demo-authentication.ib1.org
+CLI_MTLS_AUTHORISATION_SERVER=<mTLS EDP authorisation server URL>
 # Your sandbox issued application ID
-CLI_CLIENT_ID=https://directory.core.sandbox.trust.ib1.org/a/j4l5deko
+CLI_CLIENT_ID=<your directory issued client id eg. https://directory.core.sandbox.trust.ib1.org/a/j4l5deko >
 # Your protected data endpoint
-CLI_PROTECTED_RESOURCE_URL=https://perseus-demo-energy.ib1.org # 
+CLI_PROTECTED_RESOURCE_URL=<EDP protected resource URL with meter listing and energy data endpoints>
 ```
 
 Optional settings:
