@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v2.0.0] - 2026-02-18
+
+### Added
+
+- Adds a message delivery endpoint
+- Add mTLS endpoint to CDK deployment
+
+### Changed
+
+- Update readme with details of the new endpoint and test commands
+
 ## [v1.2.0] - 2026-01-20
 
 ### Added 
