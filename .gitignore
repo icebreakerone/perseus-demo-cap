@@ -20,7 +20,7 @@ cli/certs
 # misc
 .DS_Store
 *.pem
-
+!deployment/truststores/**/*.pem
 # debug
 npm-debug.log*
 yarn-debug.log*

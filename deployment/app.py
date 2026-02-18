@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from aws_cdk import App, Stack, Tags
+from aws_cdk import App, Stack, Tags, aws_ec2 as ec2
 import aws_cdk as cdk
 
 
@@ -16,6 +16,9 @@ from deployment.kms_key import ProvenanceKmsKey
 from deployment.certificates_bucket import CertificatesBucket
 from deployment.provenance_policies import ProvenanceServicePolicy
 from deployment.provenance_service import ProvenanceService
+from deployment.truststore_bucket import TruststoreBucket
+from deployment.truststore import Truststore
+from deployment.mtls_alb import MtlsAlb
 from models import Context
 
 app = App()
@@ -29,12 +32,14 @@ contexts: dict[str, Context] = {
         "domain": "preprod.perseus-demo-cap.ib1.org",
         "hosted_zone_name": "perseus-demo-cap.ib1.org",
         "auth_domain": "preprod.mtls.perseus-demo-authentication.ib1.org",
+        "mtls_domain": "preprod.mtls.perseus-demo-cap.ib1.org",
     },
     "prod": {
         "environment_name": "prod",
         "domain": "perseus-demo-cap.ib1.org",
         "hosted_zone_name": "perseus-demo-cap.ib1.org",
         "auth_domain": "mtls.perseus-demo-authentication.ib1.org",
+        "mtls_domain": "mtls.perseus-demo-cap.ib1.org",
     },
 }
 
@@ -102,6 +107,58 @@ nextjs_service = NextJsService(
         else "preprod"
     ),
 )
+
+# mTLS ALB for /perseus/messages endpoint
+env_name = contexts[deployment_context]["environment_name"]
+truststore_dir = (
+    "directory-dev-client-certificates"
+    if env_name != "prod"
+    else "directory-prod-client-certificates"
+)
+truststore_file_path = os.path.join(
+    os.path.dirname(__file__), "truststores", truststore_dir, "bundle.pem"
+)
+
+truststore_bucket = TruststoreBucket(
+    stack,
+    "TruststoreBucket",
+    environment_name=env_name,
+    truststore_file_path=truststore_file_path,
+)
+
+truststore = Truststore(
+    stack,
+    "Truststore",
+    environment_name=env_name,
+    bucket_name=truststore_bucket.bucket.bucket_name,
+    truststore_key=truststore_bucket.truststore_key,
+    bucket_deployment=truststore_bucket.bucket_deployment,
+)
+
+mtls_certificate = Certificate(
+    stack,
+    "MtlsCertificate",
+    domain_name=contexts[deployment_context]["mtls_domain"],
+    hosted_zone_name=contexts[deployment_context]["hosted_zone_name"],
+)
+
+mtls_alb = MtlsAlb(
+    stack,
+    "MtlsAlb",
+    vpc=network.vpc,
+    trust_store=truststore.trust_store,
+    certificate=mtls_certificate.certificate,
+    mtls_domain=contexts[deployment_context]["mtls_domain"],
+    hosted_zone_name=contexts[deployment_context]["hosted_zone_name"],
+)
+
+# Allow mTLS ALB to reach the ECS tasks on port 3000
+network.ecs_sg.add_ingress_rule(
+    mtls_alb.alb_sg, ec2.Port.tcp(3000), "Allow mTLS ALB to reach ECS"
+)
+
+# Register the Fargate service with the mTLS target group
+nextjs_service.service.attach_to_application_target_group(mtls_alb.target_group)
 
 # Provenance Service Resources
 provenance_kms_key = ProvenanceKmsKey(
