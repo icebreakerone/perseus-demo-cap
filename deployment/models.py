@@ -7,4 +7,3 @@ class Context(TypedDict):
     hosted_zone_name: str
     auth_domain: str
     mtls_domain: str
-    provenance_domain: Optional[str]  # Optional domain for provenance service

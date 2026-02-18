@@ -47,26 +47,22 @@ class MtlsAlb(Construct):
             health_check=elbv2.HealthCheck(path="/"),
         )
 
-        # HTTPS listener with mTLS verification
-        self.listener = elbv2.CfnListener(
-            self,
+        # HTTPS listener with L2 construct (properly associates target group with ALB)
+        self.listener = self.alb.add_listener(
             "MtlsHttpsListener",
-            certificates=[{"certificateArn": certificate.certificate_arn}],
-            default_actions=[
-                {
-                    "type": "forward",
-                    "targetGroupArn": self.target_group.target_group_arn,
-                }
-            ],
-            load_balancer_arn=self.alb.load_balancer_arn,
             port=443,
-            protocol="HTTPS",
-            ssl_policy="ELBSecurityPolicy-TLS-1-2-2017-01",
-            mutual_authentication={
-                "mode": "verify",
-                "trustStoreArn": trust_store.attr_trust_store_arn,
-            },
+            protocol=elbv2.ApplicationProtocol.HTTPS,
+            certificates=[certificate],
+            ssl_policy=elbv2.SslPolicy.TLS12,
+            default_target_groups=[self.target_group],
         )
+
+        # Add mTLS mutual authentication via escape hatch on the L1 CfnListener
+        cfn_listener = self.listener.node.default_child
+        cfn_listener.mutual_authentication = {
+            "mode": "verify",
+            "trustStoreArn": trust_store.attr_trust_store_arn,
+        }
 
         # Route53 DNS record
         hosted_zone = route53.HostedZone.from_lookup(

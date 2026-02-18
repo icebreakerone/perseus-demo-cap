@@ -110,7 +110,11 @@ nextjs_service = NextJsService(
 
 # mTLS ALB for /perseus/messages endpoint
 env_name = contexts[deployment_context]["environment_name"]
-truststore_dir = "directory-dev-client-certificates" if env_name != "prod" else "directory-prod-client-certificates"
+truststore_dir = (
+    "directory-dev-client-certificates"
+    if env_name != "prod"
+    else "directory-prod-client-certificates"
+)
 truststore_file_path = os.path.join(
     os.path.dirname(__file__), "truststores", truststore_dir, "bundle.pem"
 )
@@ -128,6 +132,7 @@ truststore = Truststore(
     environment_name=env_name,
     bucket_name=truststore_bucket.bucket.bucket_name,
     truststore_key=truststore_bucket.truststore_key,
+    bucket_deployment=truststore_bucket.bucket_deployment,
 )
 
 mtls_certificate = Certificate(
