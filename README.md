@@ -9,6 +9,7 @@ A simple NextJS web application showing the perseus authentication and authorisa
 - [Testing Perseus CAP implementations](#testing-perseus-cap-implementations)
 - [Getting Started](#getting-started)
 - [Development with docker](#development-with-docker)
+- [Message Delivery Endpoint](#message-delivery-endpoint)
 - [Certificates and keys](#certificates-and-keys)
   - [Using KMS keys](#using-kms-keys)
 - [Using the CLI](#using-the-cli)
@@ -53,6 +54,42 @@ For work requiring the provenance service a development environment can be run w
 
 ```bash
 docker compose up
+```
+
+## Message Delivery Endpoint
+
+The app exposes a `POST /perseus/messages` endpoint for receiving IB1 trust framework messages (e.g. token revocation notifications) per the [message delivery spec](https://specification.trust.ib1.org/message-delivery-to-applications/1.0/).
+
+The endpoint:
+
+- Expects the sender's client certificate in the `X-Amzn-Mtls-Clientcert-Leaf` header (URL-encoded PEM, injected by the AWS ALB in production)
+- Extracts sender identity (Application URL, Member URL, Roles) from the certificate
+- Validates that the JSON body contains an `ib1:message` field
+- Returns `200` on success, `403` for a missing or invalid certificate, `400` for an invalid body
+
+### Testing locally
+
+URL-encode a certificate for the header value:
+
+```bash
+ENCODED_CERT=$(jq -sRr @uri < ./certs/cap-demo-certs/cap-demo-bundle.pem)
+```
+
+Send a test message:
+
+```bash
+curl -X POST http://localhost:3000/perseus/messages \
+  -H "Content-Type: application/json" \
+  -H "X-Amzn-Mtls-Clientcert-Leaf: $ENCODED_CERT" \
+  -d '{"ib1:message": "urn:ib1:zeus:event:token-revocation", "token_id": "abc123"}'
+```
+
+Test without a certificate (expects 403):
+
+```bash
+curl -X POST http://localhost:3000/perseus/messages \
+  -H "Content-Type: application/json" \
+  -d '{"ib1:message": "urn:ib1:zeus:event:token-revocation"}'
 ```
 
 ## Certificates and keys

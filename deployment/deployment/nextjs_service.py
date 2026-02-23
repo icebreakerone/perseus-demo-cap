@@ -60,3 +60,6 @@ class NextJsService(Construct):
         # Configure health check path
         fargate_service.target_group.configure_health_check(path="/")
         fargate_service.task_definition.task_role.add_managed_policy(secrets_policy)
+
+        # Expose the underlying Fargate service for additional target group registration
+        self.service = fargate_service.service
