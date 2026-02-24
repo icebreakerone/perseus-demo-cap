@@ -71,8 +71,8 @@ npm run start
 The output will confirm configuration information:
 
 ```bash
-MTLS key path: ../certs/cli-test/jh7ujmiy-client-key.pem
-MTLS bundle path: ../certs/cli-test/jh7ujmiy-client-bundle.pem
+MTLS key path: ../certs/cli-test/cap-demo-key.pem
+MTLS bundle path: ../certs/cli-test/cap-demo-bundle.pem
 Server CA bundle path: undefined
 Skip server verification: false
 APP_ENV environment variable is missing; defaulting to "local"

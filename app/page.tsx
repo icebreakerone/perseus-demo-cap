@@ -121,7 +121,8 @@ const Home = () => {
 
           {stageId === 'CAPComplete' && (
             <ViewCAPSetupComplete>
-              <FormCAPSetupComplete onGotoEDPSelection={handleGotoEDPSelection} onGotoLender={handleGotoLenderSelection} />
+              <p>.</p>
+              {/* <FormCAPSetupComplete onGotoEDPSelection={handleGotoEDPSelection} onGotoLender={handleGotoLenderSelection} /> */}
             </ViewCAPSetupComplete>
           )}
         </div>
@@ -265,6 +266,7 @@ const Home = () => {
           </div>
         </div>
       )}
+      {/*
       <div className="fixed bottom-0 right-0 flex flex-col gap-2 p-8 text-lg text-red-500">
         <span>stageId: {stageId}</span>
         <span>modalId: {modalId}</span>
@@ -272,6 +274,7 @@ const Home = () => {
         <span>selectedLender: {selectedLender}</span>
         <span>sharingConsent: {sharingConsent}</span>
       </div>
+      */}
     </ErrorBoundary>
   )
 }
