@@ -17,7 +17,7 @@ import FormCAPSelectLender from '@components/forms/FormCAPSelectLender'
 import ViewCAPSharingConsent from '@components/views/ViewCAPSharingConsent'
 import FormCAPSharingConsent from '@components/forms/FormCAPSharingConsent'
 import ViewCAPSetupComplete from '@components/views/ViewCAPSetupComplete'
-import FormCAPSetupComplete from '@components/forms/FormCAPSetupComplete'
+// import FormCAPSetupComplete from '@components/forms/FormCAPSetupComplete'
 
 type TStage =
   | 'loginCAP'
@@ -43,6 +43,12 @@ const Home = () => {
   const [selectedEDP, setSelectedEDP] = useState<string>()
   const [selectedLender, setSelectedLender] = useState<string>()
   const [sharingConsent, setSharingConsent] = useState<boolean>()
+
+  console.log('stageId', stageId)
+  console.log('modalId', modalId)
+  console.log('selectedEDP', selectedEDP)
+  console.log('selectedLender', selectedLender)
+  console.log('sharingConsent', sharingConsent)
 
   useEffect(() => {
     if (key) {
@@ -80,6 +86,7 @@ const Home = () => {
     setModalId(null)
   }
 
+  /*
   const handleGotoEDPSelection = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setStageId('selectEDP')
@@ -88,6 +95,7 @@ const Home = () => {
     e.preventDefault()
     setStageId('selectLender')
   }
+  */
 
   /** EDP level */
 

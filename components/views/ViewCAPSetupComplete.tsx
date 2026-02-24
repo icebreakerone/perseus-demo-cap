@@ -3,9 +3,11 @@ import React, { useEffect, useMemo, useState } from 'react'
 
 import ErrorBoundary from '@/app/error'
 
+/*
 interface IProps {
   children: React.ReactElement
 }
+*/
 
 type EnergyPoint = {
   from: string
@@ -26,7 +28,8 @@ interface IMetersData {
   data: [TMeterData]
 }
 
-const ViewCAPSetupComplete = ({ children }: IProps) => {
+// const ViewCAPSetupComplete = ({ children }: IProps) => {
+const ViewCAPSetupComplete = () => {
   const [meterData, setMeterData] = useState<IMetersData | null>(null)
   const [data, setData] = useState<unknown>(null)
   const [error, setError] = useState<string | null>(null)
@@ -112,11 +115,13 @@ const ViewCAPSetupComplete = ({ children }: IProps) => {
     }
   }
 
+  /*
   const timeLabel = (isoString: string) => {
     const date = new Date(isoString)
     if (Number.isNaN(date.getTime())) return ''
     return date.toISOString().slice(11, 16)
   }
+  * */
 
   const barChartSvg = useMemo(() => {
     const {

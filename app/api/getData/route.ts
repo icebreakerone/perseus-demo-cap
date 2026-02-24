@@ -2,7 +2,7 @@ import {
   createCustomFetch,
   getClientConfig,
   getSession,
-  initializeClientConfig,
+  // initializeClientConfig,
 } from '@/lib/auth'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const session = await getSession()
   const issuer = await getClientConfig()
   const customFetch = await createCustomFetch()
-  const clientConfig = await initializeClientConfig()
+  // const clientConfig = await initializeClientConfig()
 
   let accessToken = session.access_token
 
