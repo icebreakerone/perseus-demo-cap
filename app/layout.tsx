@@ -11,7 +11,7 @@ type TProps = {
 
 const LocaleLayout = async ({ children }: TProps) => {
   return (
-    <html id="v0.1.4" lang="en">
+    <html id="v0.1.5" lang="en">
       <body className="h-full w-full bg-purple-100">
         <main className="flex h-full w-full flex-col overflow-hidden">
           <ErrorBoundary>
