@@ -96,6 +96,7 @@ nextjs_service = NextJsService(
         "PROVENANCE_SERVICE_URL": f"http://provenance-service.perseus-cap-{contexts[deployment_context]['environment_name']}.local:8080",
         "APP_ENV": deployment_context,
         "NODE_ENV": "production",
+        "DEPLOY_VERSION": "0.1.4",
     },
     ecs_sg=network.ecs_sg,
     certificate=certificate.certificate,
