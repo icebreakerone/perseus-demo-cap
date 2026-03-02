@@ -10,8 +10,13 @@ const FormLoginCAP = ({ onSubmit }: IProps) => {
   const [email, setEmail] = React.useState<string>('')
   const [password, setPassword] = React.useState<string>('')
 
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    onSubmit(e as never)
+  }
+
   return (
-    <form className="flex w-full flex-col gap-8">
+    <form className="flex w-full flex-col gap-8" onSubmit={handleSubmit}>
       <div className="flex w-full flex-col gap-6">
         <div className="flex flex-col justify-between gap-1">
           <label className="flex-1" htmlFor="username">
@@ -53,7 +58,7 @@ const FormLoginCAP = ({ onSubmit }: IProps) => {
               hover:bg-purple-800
               disabled:border disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500`}
             disabled={!password || !email}
-            onClick={onSubmit}
+            type="submit"
           >
             <span>Log on</span>
           </button>

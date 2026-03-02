@@ -127,12 +127,12 @@ const Home = () => {
             </ViewCAPSharingConsent>
           )}
 
-          {stageId === 'CAPComplete' && (
-            <ViewCAPSetupComplete>
-              <p>.</p>
-              {/* <FormCAPSetupComplete onGotoEDPSelection={handleGotoEDPSelection} onGotoLender={handleGotoLenderSelection} /> */}
-            </ViewCAPSetupComplete>
-          )}
+          {stageId === 'CAPComplete' && <ViewCAPSetupComplete />}
+          {/*
+          <ViewCAPSetupComplete>
+            <FormCAPSetupComplete onGotoEDPSelection={handleGotoEDPSelection} onGotoLender={handleGotoLenderSelection} />
+          </ViewCAPSetupComplete>
+          */}
         </div>
       </div>
       {modalId !== null && (
