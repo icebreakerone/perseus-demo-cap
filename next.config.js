@@ -4,11 +4,13 @@ const nextConfig = {
     domains: [],
   },
   output: 'standalone',
-  webpackDevMiddleware: config => { // enable polling for file changes (Docker issue)
-    config.watchOptions = {
-      poll: 1000,
-      aggregateTimeout: 300,
-    }
+  webpack: (config, { dev }) => {
+    // enable polling for file changes (Docker issue)
+    if (dev)
+      config.watchOptions = {
+        poll: 1000,
+        aggregateTimeout: 300,
+      }
     return config
   },
 }

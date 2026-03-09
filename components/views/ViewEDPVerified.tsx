@@ -28,6 +28,7 @@ const FormLoginCAP = ({ onClose }: IProps) => {
             hover:bg-purple-800
             disabled:border disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500`}
           onClick={onClose}
+          type="button"
         >
           <span>
             RETURN TO IB1<strong>CAP</strong>

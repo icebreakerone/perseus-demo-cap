@@ -12,16 +12,12 @@ export default function Login() {
       {session?.isLoggedIn ? (
         <div>
           <p>You are logged in!</p>
-          <a href="/Users/uxdw/Documents/_REPOS/icebreakerone/cap-demo/lib/logout">
-            Logout
-          </a>
+          <a href="/auth/logout">Logout</a>
         </div>
       ) : (
         <div>
           <p>You are not logged in.</p>
-          <a href="/Users/uxdw/Documents/_REPOS/icebreakerone/cap-demo/lib/login">
-            Login
-          </a>
+          <a href="/auth/login">Login</a>
         </div>
       )}
     </div>

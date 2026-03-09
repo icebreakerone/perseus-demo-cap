@@ -1,15 +1,14 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 export default function LoginButton() {
   const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
 
-  const handleLogin = async () => {
+  const handleLogin = () => {
     setIsLoading(true)
-    router.push('/auth/login')
+    // Use window.location.href for full page navigation to avoid CORS issues with OAuth
+    window.location.href = '/auth/login'
   }
 
   return (
@@ -17,7 +16,6 @@ export default function LoginButton() {
       className="w-[7rem] rounded-[50px] bg-purple-500 px-4 py-2 text-white hover:bg-purple-800"
       disabled={isLoading}
       id="portal"
-      // onClick={() => setStageId('edpViaAuth')}
       onClick={handleLogin}
     >
       {isLoading ? 'Loading...' : 'GO'}
