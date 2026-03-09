@@ -10,6 +10,14 @@ type TokenResponse = {
   access_token?: string
 }
 
+// CORS headers configuration
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*', // In production, replace with your specific domain
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Max-Age': '86400',
+}
+
 const config = {
   publicServer: new URL(
     process.env.CLI_PUBLIC_SERVER ??
@@ -47,6 +55,11 @@ const config = {
   ),
 }
 
+// Handle CORS preflight requests
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders })
+}
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const session = await getSession()
   const issuer = await getClientConfig()
@@ -62,7 +75,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (!code)
       return NextResponse.json(
         { error: 'Missing access token or authorization code.' },
-        { status: 401 },
+        { status: 401, headers: corsHeaders },
       )
 
     const tokenEndpoint = issuer.serverMetadata().token_endpoint
@@ -70,7 +83,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (!tokenEndpoint)
       return NextResponse.json(
         { error: 'Token endpoint is not available in the issuer metadata.' },
-        { status: 500 },
+        { status: 500, headers: corsHeaders },
       )
 
     const body = new URLSearchParams({
@@ -96,7 +109,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           error: 'Token request failed',
           details: errorText,
         },
-        { status: 500 },
+        { status: 500, headers: corsHeaders },
       )
     }
     console.log(
@@ -111,7 +124,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (!tokenData.access_token)
       return NextResponse.json(
         { error: 'Access token missing from token response.' },
-        { status: 500 },
+        { status: 500, headers: corsHeaders },
       )
 
     session.access_token = tokenData.access_token
@@ -145,7 +158,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         error: 'Error fetching data from data server',
         details: errorText,
       },
-      { status: 500 },
+      { status: 500, headers: corsHeaders },
     )
   }
   console.log('API > getData # Meter data response received successfully')
@@ -156,7 +169,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (!meterData?.data || !Array.isArray(meterData.data))
     return NextResponse.json(
       { error: 'No meter data available' },
-      { status: 500 },
+      { status: 500, headers: corsHeaders },
     )
   console.log(
     `API > getData # Meter data contains ${meterData.data.length} entries`,
@@ -172,7 +185,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   )
     return NextResponse.json(
       { error: 'No available measures for meter' },
-      { status: 500 },
+      { status: 500, headers: corsHeaders },
     )
 
   const meterId = firstMeter.id
@@ -205,7 +218,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         error: 'Error fetching data from data server',
         details: errorText,
       },
-      { status: 500 },
+      { status: 500, headers: corsHeaders },
     )
   }
   console.log('API > getData # Data response received successfully')
@@ -213,5 +226,5 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const data = await dataResponse.json()
   console.log('Data:', data)
 
-  return NextResponse.json({ meterData, data })
+  return NextResponse.json({ meterData, data }, { headers: corsHeaders })
 }
