@@ -1,9 +1,15 @@
 import { ReactNode } from 'react'
+import type { Metadata } from 'next'
 
 import './globals.css'
 
 import ErrorBoundary from '@/app/error'
 import Header from '@/components/Header'
+
+export const metadata: Metadata = {
+  title: 'Perseus Demo Cap',
+  description: 'IB1 CAP Demo - Perseus Energy Data Platform',
+}
 
 type TProps = {
   children: ReactNode
