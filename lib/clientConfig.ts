@@ -128,7 +128,7 @@ export const initializeClientConfig = async (
 
   const baseConfig: IClientConfig = {
     server: new URL(
-      process.env.NEXT_PUBLIC_SERVER_URL ||
+      process.env.NEXT_PUBLIC_SERVER ||
         'https://preprod.perseus-demo-authentication.ib1.org',
     ),
     client_id: process.env.NEXT_PUBLIC_CLIENT_ID as string,
