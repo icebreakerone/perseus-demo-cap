@@ -31,14 +31,14 @@ contexts: dict[str, Context] = {
         "environment_name": "dev",
         "domain": "preprod.perseus-demo-cap.ib1.org",
         "hosted_zone_name": "perseus-demo-cap.ib1.org",
-        "auth_domain": "preprod.mtls.perseus-demo-authentication.ib1.org",
+        "auth_domain": "preprod.perseus-demo-authentication.ib1.org",
         "mtls_domain": "preprod.mtls.perseus-demo-cap.ib1.org",
     },
     "prod": {
         "environment_name": "prod",
         "domain": "perseus-demo-cap.ib1.org",
         "hosted_zone_name": "perseus-demo-cap.ib1.org",
-        "auth_domain": "mtls.perseus-demo-authentication.ib1.org",
+        "auth_domain": "perseus-demo-authentication.ib1.org",
         "mtls_domain": "mtls.perseus-demo-cap.ib1.org",
     },
 }

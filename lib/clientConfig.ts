@@ -129,7 +129,7 @@ export const initializeClientConfig = async (
   const baseConfig: IClientConfig = {
     server: new URL(
       process.env.NEXT_PUBLIC_SERVER ||
-        'https://preprod.perseus-demo-authentication.ib1.org',
+        'https://preprod.perseus-demo-authentication.ib1.org', // Must be non-mTLS URL for OAuth discovery
     ),
     client_id: process.env.NEXT_PUBLIC_CLIENT_ID as string,
     redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
@@ -144,7 +144,7 @@ export const initializeClientConfig = async (
     code_challenge_method: 'S256',
     protectedResourceUrl: new URL(
       process.env.NEXT_PUBLIC_PROTECTED_RESOURCE_URL ||
-        'https://preprod.perseus-demo-energy.ib1.org/datasources/id/measure?from=2024-12-05T00:00:00Z&to=2024-12-06T00:00:00Z',
+        'https://preprod.mtls.perseus-demo-energy.ib1.org/datasources/id/measure?from=2024-12-05T00:00:00Z&to=2024-12-06T00:00:00Z',
     ),
     skipServerVerification: false,
   }
