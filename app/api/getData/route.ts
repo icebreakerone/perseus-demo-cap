@@ -1,9 +1,5 @@
-import {
-  createCustomFetch,
-  getClientConfig,
-  getSession,
-  // initializeClientConfig,
-} from '@/lib/auth'
+import { createCustomFetch, getClientConfig, getSession } from '@/lib/auth'
+import { getClientConfigPromise } from '@lib/clientConfig'
 import { NextRequest, NextResponse } from 'next/server'
 
 type TokenResponse = {
@@ -18,43 +14,6 @@ const corsHeaders = {
   'Access-Control-Max-Age': '86400',
 }
 
-const config = {
-  publicServer: new URL(
-    process.env.CLI_PUBLIC_SERVER ??
-      'https://mtls.perseus-demo-authentication.ib1.org', //'https://localhost:8000'
-  ),
-  mTLSAuthorisationServer: new URL(
-    process.env.CLI_MTLS_AUTHORISATION_SERVER ??
-      'https://mtls.perseus-demo-authentication.ib1.org',
-  ),
-  clientId:
-    process.env.CLI_CLIENT_ID ??
-    'https://directory.core.sandbox.trust.ib1.org/a/s2914npr',
-  redirectUri: process.env.CLI_REDIRECT_URI ?? 'http://localhost:3000/callback',
-  postLoginRedirect:
-    process.env.CLI_POST_LOGIN_REDIRECT ?? 'http://localhost:3000/callback',
-  mtlsBundlePath:
-    process.env.CLI_MTLS_BUNDLE_PATH ??
-    '../certs/cap-demo-certs/cap-demo-bundle.pem',
-  mtlsKeyPath:
-    process.env.CLI_MTLS_KEY_PATH ?? '../certs/cap-demo-certs/cap-demo-key.pem',
-  serverCaPath: process.env.CLI_SERVER_CA_PATH,
-  skipServerVerification: ['true', '1', 'yes'].includes(
-    process.env.CLI_SKIP_SERVER_VERIFICATION?.toLowerCase() ?? '',
-  ),
-  protectedResourceUrl: new URL(
-    process.env.CLI_PROTECTED_RESOURCE_URL ??
-      'https://preprod.mtls.perseus-demo-energy.ib1.org/datasources/', //'https://localhost:8010/datasources/'
-  ),
-  provenanceServiceUrl: new URL(
-    process.env.CLI_PROVENANCE_SERVICE_URL ?? 'http://localhost:8081',
-  ),
-  mtlsAuthorisationServer: new URL(
-    process.env.CLI_MTLS_AUTHORISATION_SERVER ??
-      'https://mtls.perseus-demo-authentication.ib1.org',
-  ),
-}
-
 // Handle CORS preflight requests
 export async function OPTIONS() {
   return NextResponse.json({}, { headers: corsHeaders })
@@ -64,7 +23,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const session = await getSession()
   const issuer = await getClientConfig()
   const customFetch = await createCustomFetch()
-  // const clientConfig = await initializeClientConfig()
+  const clientConfig = await getClientConfigPromise()
 
   let accessToken = session.access_token
 
@@ -89,10 +48,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const body = new URLSearchParams({
       grant_type: 'authorization_code',
       code,
-      // redirect_uri: clientConfig.redirect_uri,
-      // client_id: clientConfig.client_id,
-      redirect_uri: config.redirectUri,
-      client_id: config.clientId,
+      redirect_uri: clientConfig.redirect_uri,
+      client_id: clientConfig.client_id,
       code_verifier: session.code_verifier || '',
     }).toString()
 
@@ -137,8 +94,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   console.log('API > getData # Using access token:', accessToken)
 
   const meterDataResponse = await customFetch(
-    // new URL('/datasources/', clientConfig.protectedResourceUrl),
-    new URL('/datasources/', config.protectedResourceUrl),
+    new URL('/datasources/', clientConfig.protectedResourceUrl),
     {
       method: 'GET',
       headers: {
@@ -197,7 +153,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const dataResponse = await customFetch(
     new URL(
       `/datasources/${meterId}/${meterMeasure}?from=2024-12-05&to=2024-12-06`,
-      config.protectedResourceUrl,
+      clientConfig.protectedResourceUrl,
     ),
     {
       method: 'GET',
