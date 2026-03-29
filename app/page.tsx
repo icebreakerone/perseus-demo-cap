@@ -16,12 +16,15 @@ import ViewSelectLender from '@components/views/ViewSelectLender'
 import FormCAPSelectLender from '@components/forms/FormCAPSelectLender'
 import ViewCAPSharingConsent from '@components/views/ViewCAPSharingConsent'
 import FormCAPSharingConsent from '@components/forms/FormCAPSharingConsent'
+import ViewSharingConsentBank from '@components/views/ViewSharingConsentBank'
+import FormSharingConsentBank from '@components/forms/FormSharingConsentBank'
 import ViewCAPSetupComplete from '@components/views/ViewCAPSetupComplete'
 // import FormCAPSetupComplete from '@components/forms/FormCAPSetupComplete'
 
 type TStage =
   | 'loginCAP'
   | 'selectEDP'
+  | 'SharingConsentBank'
   | 'connectEDP'
   | 'edpViaAuth'
   | 'edpViaMac'
@@ -69,6 +72,11 @@ const Home = () => {
   const handleSelectEDP = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setSelectedEDP((e.target as HTMLInputElement).value)
+    setStageId('SharingConsentBank')
+    setModalId(null)
+  }
+  const handleConfirmShareConsentBank = async (value: boolean) => {
+    setSharingConsent(value)
     setStageId('connectEDP')
     setModalId('edp')
   }
@@ -79,7 +87,6 @@ const Home = () => {
     setStageId('CAPSharingConsent')
     setModalId(null)
   }
-
   const handleConfirmShareConsent = async (value: boolean) => {
     setSharingConsent(value)
     setStageId('CAPComplete')
@@ -115,6 +122,14 @@ const Home = () => {
             </ViewSelectEDP>
           )}
 
+          {stageId === 'SharingConsentBank' && (
+            <ViewSharingConsentBank>
+              <FormSharingConsentBank
+                onSubmit={handleConfirmShareConsentBank}
+              />
+            </ViewSharingConsentBank>
+          )}
+
           {stageId === 'selectLender' && (
             <ViewSelectLender>
               <FormCAPSelectLender onSubmit={handleSelectLender} />
@@ -138,31 +153,30 @@ const Home = () => {
       {modalId !== null && (
         <div className="fixed bottom-0 left-0 right-0 top-0 bg-[rgba(0,0,0,0.5)]">
           <div className="mx-auto my-[10vh] flex h-[80vh] w-[50vw] flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
-            <div className="flex flex-col gap-4 bg-purple-900 p-4">
+            <div className="flex flex-col gap-4 bg-green-900 p-4">
               {modalId === 'edp' && stageId == 'connectEDP' && (
                 <h1 className="flex-1 text-center text-2xl font-normal text-white">
-                  IB1 <strong>EDP</strong> | Options
+                  IB1 EDP | Options
                 </h1>
               )}
               {modalId === 'edp' && stageId == 'edpViaAuth' && (
                 <h1 className="flex-1 text-center text-2xl font-normal text-white">
-                  IB1<strong>EDP</strong> | Access Via Auth
+                  IB1 EDP | Access Via Auth
                 </h1>
               )}
               {modalId === 'edp' && stageId == 'edpViaMac' && (
                 <h1 className="flex-1 text-center text-2xl font-normal text-white">
-                  IB1<strong>EDP</strong> | Access Via Mac
+                  IB1 EDP | Access Via Mac
                 </h1>
               )}
             </div>
 
-            <div className="flex flex-1 flex-col gap-4 bg-purple-200 p-8">
+            <div className="flex flex-1 flex-col gap-4 bg-green-200 p-8">
               {modalId === 'edp' && stageId === 'connectEDP' && (
                 <>
                   <p>
-                    IB1<strong>CAP</strong> is asking to retrieve your detailed
-                    electricity electricity consumption data. For this, they
-                    require proof address.
+                    To retrieve your smart meter data, please sign in or provide
+                    proof of your address
                   </p>
                   <p>
                     Please click on the relevant icon below for your preferred
@@ -171,8 +185,7 @@ const Home = () => {
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-1 flex-row items-center justify-between">
                       <label className="flex-1" htmlFor="portal">
-                        via your logging onto your IB1<strong>EDP</strong>{' '}
-                        portal
+                        via your logging onto your IB1 EDP portal
                       </label>
                       <LoginButton />
                     </div>
@@ -222,13 +235,12 @@ const Home = () => {
               {modalId === 'edp' && stageId === 'edpViaAuth' && (
                 <>
                   <p>
-                    IB1<strong>CAP</strong> is asking to retrieve your detailed
-                    electricity consumption data to calculate your emissions
-                    report.
+                    IB1 CAP is asking to retrieve your detailed electricity
+                    consumption data to calculate your emissions report.
                   </p>
                   <p>
-                    Please log in below to access your IB1<strong>EDP</strong>{' '}
-                    account and authorise the data transfer.
+                    Please log in below to access your IB1 EDP account and
+                    authorise the data transfer.
                   </p>
                   <div className="flex flex-col gap-4">
                     <FormEDPLogin onSubmit={() => {}} />
@@ -239,7 +251,7 @@ const Home = () => {
               {modalId === 'edp' && stageId === 'edpViaMac' && (
                 <>
                   <p>
-                    IB1<strong>CAP</strong> is asking to retrieve your detailed
+                    IB1 CAP is asking to retrieve your detailed electricity
                     electricity consumption data. For this, they require proof
                     of your address.
                   </p>
@@ -257,9 +269,9 @@ const Home = () => {
                 <>
                   <p>
                     <strong>Good news</strong>, we have confirmed your address
-                    and allowed Sage Earth to retrieve your smart meter data.
+                    and allowed IB1 CAP to retrieve your smart meter data.
                   </p>
-                  <p>You may now return to Sage Earth</p>
+                  <p>You may now return to IB1 CAP</p>
                   <div className="flex flex-col gap-4">
                     <ViewEDPVerified
                       onClose={() => {

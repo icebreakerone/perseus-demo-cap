@@ -44,10 +44,10 @@ const FormLoginCAP = ({ onSubmit }: IProps) => {
           className={`
             text-md
             rounded-md
-            bg-purple-600 px-4
+            bg-green-600 px-4
             py-2
             text-white
-            hover:bg-purple-800
+            hover:bg-green-800
             disabled:border disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500`}
           disabled={!password || !email}
           onClick={onSubmit}
