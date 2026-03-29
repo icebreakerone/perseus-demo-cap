@@ -5,7 +5,7 @@ interface IProps {
   onSubmit: (e: boolean) => void
 }
 
-const FormCAPSharingConsent = ({ onSubmit }: IProps) => {
+const FormSharingConsentBank = ({ onSubmit }: IProps) => {
   const [selected, setSelected] = React.useState<boolean>(false)
 
   return (
@@ -44,4 +44,4 @@ const FormCAPSharingConsent = ({ onSubmit }: IProps) => {
   )
 }
 
-export default FormCAPSharingConsent
+export default FormSharingConsentBank
