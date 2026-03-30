@@ -13,7 +13,7 @@ export default function LoginButton() {
 
   return (
     <button
-      className="w-[7rem] rounded-[50px] bg-purple-500 px-4 py-2 text-white hover:bg-purple-800"
+      className="w-[7rem] rounded-[50px] bg-green-500 px-4 py-2 text-white hover:bg-green-800"
       disabled={isLoading}
       id="portal"
       onClick={handleLogin}

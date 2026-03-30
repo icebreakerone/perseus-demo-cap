@@ -7,20 +7,21 @@ interface IProps {
   children: React.ReactElement
 }
 
-const ViewCAPSharingConsent = ({ children }: IProps) => {
+const ViewSharingConsentBank = ({ children }: IProps) => {
   return (
     <ErrorBoundary>
       <p>
-        Please click below to confirm your consent for IB1 CAP to share your
-        calculated emissions data from IB1 EDP with IB1 Bank.
+        Please click below to confirm your consent for IB1 Bank to share your
+        calculated emissions data from Perse with IB1 EDP.
       </p>
       <p>
         As a reminder, we need to have your consent to access the following data
-        provided by IB1 EDP.
+        provided by Perse.
       </p>
 
       <h2 className="text-lg">Energy Consumption Data License</h2>
       <h1 className="text-xl">Data License Terms</h1>
+
       <div className="overflow-y-auto overflow-x-hidden">
         <h2 className="mb-2 border-b-2 border-gray-400 text-lg">
           Interpretation
@@ -144,8 +145,8 @@ const ViewCAPSharingConsent = ({ children }: IProps) => {
         </p>
 
         <p className="mb-2">
-          As a reminder, [CAP] (“we”) need to have your consent to access the
-          following data provided by [EDP]:
+          [CAP] (“we”) need your consent to access the following data provided
+          by [EDP]:
         </p>
         <ul className="mb-2 ml-4">
           <li>
@@ -160,12 +161,12 @@ const ViewCAPSharingConsent = ({ children }: IProps) => {
         <ul className="mb-2 ml-4">
           <li>
             * An estimate of your current GHG emissions, sourced from the
-            preceding 12 months of data where available
+            preceding 12 months where available
           </li>
           <li>
             * An estimate of projected emissions following any proposed
             intervention(s) that could be financed: a one-off estimate prior to
-            the intervention, delivered once
+            the intervention, delivered once.
           </li>
           <li>
             * A periodic update to corroborate projected emissions savings:
@@ -176,7 +177,7 @@ const ViewCAPSharingConsent = ({ children }: IProps) => {
         <p className="mb-2">and then use the emissions data as follows:</p>
         <ul className="mb-2 ml-4">
           <li>
-            * Share it with your chosen financial service provider(s) to
+            * Share it with your chosen financial service provider(s) (FSPs) to
             facilitate your access to green finance products from that provider
             or providers.
           </li>
@@ -198,22 +199,6 @@ const ViewCAPSharingConsent = ({ children }: IProps) => {
           (https://smartenergycodecompany.co.uk). You can find out more about
           [EDP] and its privacy policy here [EDP privacy policy link].
         </p>
-
-        <p className="mb-2">
-          Now, on behalf of [FSP], we seek your consent for them to process the
-          emissions data:
-        </p>
-        <ul className="mb-2 ml-4">
-          <li>
-            * In order to consider your eligibility for green finance products
-          </li>
-          <li>
-            * If you are offered any green finance products as a consequence of
-            our providing emissions data to them, in order to allow them to
-            manage your use of that product, including monitoring your
-            compliance with any conditions imposed by it.
-          </li>
-        </ul>
 
         <p className="mb-2">
           You can withdraw your consent at any time by [CAP process], at which
@@ -238,9 +223,9 @@ const ViewCAPSharingConsent = ({ children }: IProps) => {
         </p>
       </div>
 
-      <div className="ml-8">{children}</div>
+      <div className="">{children}</div>
     </ErrorBoundary>
   )
 }
 
-export default ViewCAPSharingConsent
+export default ViewSharingConsentBank
