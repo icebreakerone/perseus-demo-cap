@@ -11,18 +11,12 @@ const ViewSharingConsentBank = ({ children }: IProps) => {
   return (
     <ErrorBoundary>
       <p>
-        Please click below to confirm your consent for IB1 Bank to share your
-        calculated emissions data from Perse with IB1 EDP.
+        Please click below to confirm your consent for us access your energy
+        consumption data from IB1 EDP.
       </p>
-      <p>
-        As a reminder, we need to have your consent to access the following data
-        provided by Perse.
-      </p>
-
-      <h2 className="text-lg">Energy Consumption Data License</h2>
-      <h1 className="text-xl">Data License Terms</h1>
 
       <div className="overflow-y-auto overflow-x-hidden">
+        {/*
         <h2 className="mb-2 border-b-2 border-gray-400 text-lg">
           Interpretation
         </h2>
@@ -143,10 +137,11 @@ const ViewSharingConsentBank = ({ children }: IProps) => {
           This license is to be interpreted in accordance with the law of
           England and Wales.
         </p>
+        */}
 
         <p className="mb-2">
-          [CAP] (“we”) need your consent to access the following data provided
-          by [EDP]:
+          IB1 Cap (“we”) need your consent to access the following data provided
+          by IB1 EDP:
         </p>
         <ul className="mb-2 ml-4">
           <li>
@@ -192,12 +187,12 @@ const ViewSharingConsentBank = ({ children }: IProps) => {
         </p>
 
         <p className="mb-2">
-          We use the [EDP] service that interfaces with the national smart meter
-          systems and other energy industry databases in order to collect,
-          store, manage and share your smart data with us. Their service
-          operates in compliance with the Smart Energy Code
+          We use the IB1 EDP service that interfaces with the national smart
+          meter meter systems and other energy industry databases in order to
+          collect, store, manage and share your smart data with us. Their
+          service operates in compliance with the Smart Energy Code
           (https://smartenergycodecompany.co.uk). You can find out more about
-          [EDP] and its privacy policy here [EDP privacy policy link].
+          IB1 EDP and its privacy policy here [EDP privacy policy link].
         </p>
 
         <p className="mb-2">
