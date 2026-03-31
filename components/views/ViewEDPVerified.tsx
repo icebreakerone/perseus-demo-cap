@@ -9,12 +9,6 @@ interface IProps {
 const FormLoginCAP = ({ onClose }: IProps) => {
   return (
     <ErrorBoundary>
-      <p>
-        Good news, we have confirmed your address and allowed IB1
-        <strong> CAP</strong> to retrieve your smart meter data.
-      </p>
-      <span>You may now return to IB1 CAP.</span>
-
       <div className="flex flex-row gap-4">
         <button
           className={`
