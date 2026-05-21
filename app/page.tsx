@@ -151,7 +151,7 @@ const Home = () => {
         </div>
       </div>
       {modalId !== null && (
-        <div className="fixed bottom-0 left-0 right-0 top-0 bg-[rgba(0,0,0,0.5)]">
+        <div className="fixed top-0 right-0 bottom-0 left-0 bg-[rgba(0,0,0,0.5)]">
           <div className="mx-auto my-[10vh] flex h-[80vh] w-[50vw] flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
             <div className="flex flex-col gap-4 bg-green-900 p-4">
               {modalId === 'edp' && stageId == 'connectEDP' && (

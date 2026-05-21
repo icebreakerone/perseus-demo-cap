@@ -20,14 +20,14 @@ class ErrorBoundary extends React.Component<
 
   static getDerivedStateFromError(error: Error) {
     // Update state so the next render will show the fallback UI.
-    // eslint-disable-next-line no-console
+
     console.error('Error caught by error boundary gDSFE:', error)
     return { hasError: true }
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // You can also log the error to an error reporting service
-    // eslint-disable-next-line no-console
+
     console.error('Error caught by error boundary cDC:', error, errorInfo)
   }
 
