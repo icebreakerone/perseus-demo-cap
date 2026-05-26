@@ -11,14 +11,9 @@ const FormLoginCAP = ({ onClose }: IProps) => {
     <ErrorBoundary>
       <div className="flex flex-row gap-4">
         <button
-          className={`
-            text-md
-            rounded-md
-            bg-green-600 px-4
-            py-2
-            text-white
-            hover:bg-green-800
-            disabled:border disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500`}
+          className={
+            'text-md rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-800 disabled:border disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500'
+          }
           onClick={onClose}
           type="button"
         >

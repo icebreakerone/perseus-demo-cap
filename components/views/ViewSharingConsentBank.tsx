@@ -15,7 +15,7 @@ const ViewSharingConsentBank = ({ children }: IProps) => {
         consumption data from IB1 EDP.
       </p>
 
-      <div className="overflow-y-auto overflow-x-hidden">
+      <div className="overflow-x-hidden overflow-y-auto">
         {/*
         <h2 className="mb-2 border-b-2 border-gray-400 text-lg">
           Interpretation

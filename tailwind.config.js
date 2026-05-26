@@ -1,40 +1,13 @@
-/** @type {import('tailwindcss').Config} */
-//x const plugin = require('tailwindcss/plugin')
-import plugin from 'tailwindcss/plugin'
+const plugin = require('tailwindcss/plugin')
 
+/** @type {import('tailwindcss').Config} */
 module.exports = {
-  mode: 'jit',
-  purge: [
-    './app/**/*.{js,ts,jsx,tsx}',
-    './components/**/*.{js,ts,jsx,tsx}',
-    './stories/**/*.{js,ts,jsx,tsx}',
-  ],
   content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './stories/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
-    /* theme example overrides 
-    screens: {
-      sm: '480px',
-      md: '768px',
-      lg: '976px',
-      xl: '1440px',
-    },
-    colors: {
-      blue: '#1fb6ff',
-      purple: '#7e5bef',
-      pink: '#ff49db',
-      orange: '#ff7849',
-      green: '#13ce66',
-      yellow: '#ffc82c',
-      'gray-dark': '#273444',
-      gray: '#8492a6',
-      'gray-light': '#f3f1f1',
-    },
-    fontFamily: {},
-    * */
     extend: {
       width: {
         'panel-sm': '150px',
@@ -44,7 +17,6 @@ module.exports = {
       },
     },
   },
-  variant: {},
   plugins: [
     plugin(function ({ addComponents, theme }) {
       addComponents({
@@ -66,7 +38,6 @@ module.exports = {
             backgroundColor: theme('colors.gray.300'),
             border: `2px solid ${theme('colors.gray.300')}`,
             color: theme('colors.gray.500'),
-            // pointerEvents: 'none',
           },
         },
         '.cl-btn-primary': {
