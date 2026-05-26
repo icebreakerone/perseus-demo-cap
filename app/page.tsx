@@ -54,8 +54,15 @@ const Home = () => {
 
   // const [processing, setProcessing] = useState<boolean>()
 
-  const [stageId, setStageId] = useState<TStage>('loginCAP')
-  const [modalId, setModalId] = useState<TModal | null>(null)
+  // Seed initial stage/modal from the optional ?key= deep-link param (read once at mount).
+  // Done via lazy initializers rather than an effect to avoid a cascading re-render and the
+  // brief flash of the login screen before jumping to the deep-linked stage.
+  const [stageId, setStageId] = useState<TStage>(() =>
+    key ? (key as TStage) : 'loginCAP',
+  )
+  const [modalId, setModalId] = useState<TModal | null>(() =>
+    key?.toLowerCase().includes('edp') ? 'edp' : null,
+  )
   const [selectedEDP, setSelectedEDP] = useState<string>()
   const [selectedLender, setSelectedLender] = useState<string>()
   const [sharingConsent, setSharingConsent] = useState<boolean>()
@@ -65,14 +72,6 @@ const Home = () => {
   console.log('selectedEDP', selectedEDP)
   console.log('selectedLender', selectedLender)
   console.log('sharingConsent', sharingConsent)
-
-  useEffect(() => {
-    if (key) {
-      // if the requested stageId is part of the edp from then launch as a modal
-      if (key.toLowerCase().includes('edp')) setModalId('edp')
-      setStageId(key as TStage)
-    }
-  }, [])
 
   useEffect(() => {
     if (stageId !== 'retrieveEDP') return

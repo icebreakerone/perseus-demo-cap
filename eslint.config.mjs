@@ -3,7 +3,7 @@ import nextTypeScript from 'eslint-config-next/typescript'
 import prettierRecommended from 'eslint-plugin-prettier/recommended'
 import prettierConfig from './.prettierrc.js'
 
-export default [
+const config = [
   {
     ignores: [
       '.next/**',
@@ -60,3 +60,5 @@ export default [
     },
   },
 ]
+
+export default config
