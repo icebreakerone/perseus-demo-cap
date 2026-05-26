@@ -19,6 +19,8 @@ import FormCAPSharingConsent from '@components/forms/FormCAPSharingConsent'
 import ViewSharingConsentBank from '@components/views/ViewSharingConsentBank'
 import FormSharingConsentBank from '@components/forms/FormSharingConsentBank'
 import ViewCAPSetupComplete from '@components/views/ViewCAPSetupComplete'
+import ViewRetrieveEDP from '@components/views/ViewRetrieveEDP'
+import StagesBar from '@components/StagesBar'
 // import FormCAPSetupComplete from '@components/forms/FormCAPSetupComplete'
 
 type TStage =
@@ -29,10 +31,21 @@ type TStage =
   | 'edpViaAuth'
   | 'edpViaMac'
   | 'edpVerified'
+  | 'retrieveEDP'
   | 'selectLender'
   | 'CAPSharingConsent'
   | 'CAPComplete'
 type TModal = 'edp'
+
+type TStep = 1 | 2 | 3 | 4 | 5 | 6
+const STAGE_TO_STEP: Partial<Record<TStage, TStep>> = {
+  selectEDP: 1,
+  SharingConsentBank: 2,
+  retrieveEDP: 3,
+  selectLender: 4,
+  CAPSharingConsent: 5,
+  CAPComplete: 6,
+}
 
 const Home = () => {
   // get search params
@@ -60,6 +73,12 @@ const Home = () => {
       setStageId(key as TStage)
     }
   }, [])
+
+  useEffect(() => {
+    if (stageId !== 'retrieveEDP') return
+    const t = setTimeout(() => setStageId('selectLender'), 2000)
+    return () => clearTimeout(t)
+  }, [stageId])
 
   /** CAP level */
   const handleLoginCAP = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -106,10 +125,14 @@ const Home = () => {
 
   /** EDP level */
 
+  const currentStep = STAGE_TO_STEP[stageId]
+  const showStagesBar = modalId === null && currentStep !== undefined
+
   return (
     <ErrorBoundary>
-      <div className="flex h-full flex-col gap-8 overflow-hidden p-8">
-        <div className="flex flex-col gap-4 overflow-y-auto">
+      <div className="flex h-full flex-col overflow-hidden">
+        {showStagesBar && <StagesBar currentStep={currentStep as TStep} />}
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-8">
           {stageId === 'loginCAP' && (
             <ViewLoginCAP>
               <FormCAPLogin onSubmit={handleLoginCAP} />
@@ -129,6 +152,8 @@ const Home = () => {
               />
             </ViewSharingConsentBank>
           )}
+
+          {stageId === 'retrieveEDP' && <ViewRetrieveEDP />}
 
           {stageId === 'selectLender' && (
             <ViewSelectLender>
@@ -275,7 +300,7 @@ const Home = () => {
                   <div className="flex flex-col gap-4">
                     <ViewEDPVerified
                       onClose={() => {
-                        setStageId('selectLender')
+                        setStageId('retrieveEDP')
                         setModalId(null)
                       }}
                     />
