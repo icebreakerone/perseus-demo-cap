@@ -25,6 +25,7 @@ class NextJsService(Construct):
         domain_name: str,
         domain_zone_name: str,
         env_name: str,
+        secrets: dict | None = None,
         **kwargs
     ):
         super().__init__(scope, id, **kwargs)
@@ -45,6 +46,7 @@ class NextJsService(Construct):
                 ),
                 container_port=3000,
                 environment=environment,
+                secrets=secrets or {},
             ),
             public_load_balancer=True,
             assign_public_ip=True,
