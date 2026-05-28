@@ -1,7 +1,17 @@
 import os
-import uuid
 
-from aws_cdk import App, Stack, Tags, aws_ec2 as ec2
+import boto3
+from botocore.exceptions import ClientError
+
+from aws_cdk import (
+    App,
+    Stack,
+    Tags,
+    RemovalPolicy,
+    aws_ec2 as ec2,
+    aws_ecs as ecs,
+    aws_secretsmanager as secretsmanager,
+)
 import aws_cdk as cdk
 
 
@@ -54,6 +64,37 @@ stack = Stack(
 Tags.of(stack).add("ib1:p-perseus:owner", "kip.parker@ib1.org")
 Tags.of(stack).add("ib1:p-perseus:stage", deployment_context)
 
+
+def _resolve_cookie_secret(scope: Stack, env_name: str) -> secretsmanager.ISecret:
+    """Import the cookie session secret if it already exists, otherwise create
+    it with a generated value. RETAIN so it survives stack deletion."""
+    secret_name = f"perseus-demo-cap/{env_name}/cookie-password"
+    client = boto3.client("secretsmanager", region_name=scope.region)
+    try:
+        client.describe_secret(SecretId=secret_name)
+        return secretsmanager.Secret.from_secret_name_v2(
+            scope, "CookieSessionSecret", secret_name
+        )
+    except ClientError as e:
+        if e.response["Error"]["Code"] != "ResourceNotFoundException":
+            raise
+        new_secret = secretsmanager.Secret(
+            scope,
+            "CookieSessionSecret",
+            secret_name=secret_name,
+            generate_secret_string=secretsmanager.SecretStringGenerator(
+                exclude_punctuation=True,
+                password_length=32,
+            ),
+        )
+        new_secret.apply_removal_policy(RemovalPolicy.RETAIN)
+        return new_secret
+
+
+cookie_secret = _resolve_cookie_secret(
+    stack, contexts[deployment_context]["environment_name"]
+)
+
 network = NetworkConstruct(
     stack, "Network", environment_name=contexts[deployment_context]["environment_name"]
 )
@@ -88,7 +129,6 @@ nextjs_service = NextJsService(
     vpc=network.vpc,
     secrets_policy=secrets_policy.policy,
     environment={
-        "SECRET_COOKIE_PASSWORD": uuid.uuid4().hex,
         "NEXT_PUBLIC_APP_URL": f"https://{contexts[deployment_context]["domain"]}",
         "NEXT_PUBLIC_REDIRECT_URL": f"https://{contexts[deployment_context]["domain"]}?key=edpVerified",
         "NEXT_PUBLIC_CLIENT_ID": "f67916ce-de33-4e2f-a8e3-cbd5f6459c30",
@@ -97,6 +137,9 @@ nextjs_service = NextJsService(
         "APP_ENV": deployment_context,
         "NODE_ENV": "production",
         "DEPLOY_VERSION": "0.1.4",
+    },
+    secrets={
+        "SECRET_COOKIE_PASSWORD": ecs.Secret.from_secrets_manager(cookie_secret),
     },
     ecs_sg=network.ecs_sg,
     certificate=certificate.certificate,
