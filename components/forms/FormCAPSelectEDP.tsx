@@ -45,14 +45,9 @@ const FormCAPSelectEDP = ({ onSubmit }: IProps) => {
         </button>
         */}
         <button
-          className={`
-            text-md
-            rounded-md
-            bg-purple-600 px-4
-            py-2
-            text-white
-            hover:bg-purple-800
-            disabled:border disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500`}
+          className={
+            'text-md rounded-md bg-purple-600 px-4 py-2 text-white hover:bg-purple-800 disabled:border disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500'
+          }
           disabled={!edp}
           onClick={onSubmit}
         >

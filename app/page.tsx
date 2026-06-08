@@ -19,6 +19,8 @@ import FormCAPSharingConsent from '@components/forms/FormCAPSharingConsent'
 import ViewSharingConsentBank from '@components/views/ViewSharingConsentBank'
 import FormSharingConsentBank from '@components/forms/FormSharingConsentBank'
 import ViewCAPSetupComplete from '@components/views/ViewCAPSetupComplete'
+import ViewRetrieveEDP from '@components/views/ViewRetrieveEDP'
+import StagesBar from '@components/StagesBar'
 // import FormCAPSetupComplete from '@components/forms/FormCAPSetupComplete'
 
 type TStage =
@@ -29,10 +31,21 @@ type TStage =
   | 'edpViaAuth'
   | 'edpViaMac'
   | 'edpVerified'
+  | 'retrieveEDP'
   | 'selectLender'
   | 'CAPSharingConsent'
   | 'CAPComplete'
 type TModal = 'edp'
+
+type TStep = 1 | 2 | 3 | 4 | 5 | 6
+const STAGE_TO_STEP: Partial<Record<TStage, TStep>> = {
+  selectEDP: 1,
+  SharingConsentBank: 2,
+  retrieveEDP: 3,
+  selectLender: 4,
+  CAPSharingConsent: 5,
+  CAPComplete: 6,
+}
 
 const Home = () => {
   // get search params
@@ -41,8 +54,15 @@ const Home = () => {
 
   // const [processing, setProcessing] = useState<boolean>()
 
-  const [stageId, setStageId] = useState<TStage>('loginCAP')
-  const [modalId, setModalId] = useState<TModal | null>(null)
+  // Seed initial stage/modal from the optional ?key= deep-link param (read once at mount).
+  // Done via lazy initializers rather than an effect to avoid a cascading re-render and the
+  // brief flash of the login screen before jumping to the deep-linked stage.
+  const [stageId, setStageId] = useState<TStage>(() =>
+    key ? (key as TStage) : 'loginCAP',
+  )
+  const [modalId, setModalId] = useState<TModal | null>(() =>
+    key?.toLowerCase().includes('edp') ? 'edp' : null,
+  )
   const [selectedEDP, setSelectedEDP] = useState<string>()
   const [selectedLender, setSelectedLender] = useState<string>()
   const [sharingConsent, setSharingConsent] = useState<boolean>()
@@ -54,12 +74,10 @@ const Home = () => {
   console.log('sharingConsent', sharingConsent)
 
   useEffect(() => {
-    if (key) {
-      // if the requested stageId is part of the edp from then launch as a modal
-      if (key.toLowerCase().includes('edp')) setModalId('edp')
-      setStageId(key as TStage)
-    }
-  }, [])
+    if (stageId !== 'retrieveEDP') return
+    const t = setTimeout(() => setStageId('selectLender'), 2000)
+    return () => clearTimeout(t)
+  }, [stageId])
 
   /** CAP level */
   const handleLoginCAP = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -106,10 +124,14 @@ const Home = () => {
 
   /** EDP level */
 
+  const currentStep = STAGE_TO_STEP[stageId]
+  const showStagesBar = modalId === null && currentStep !== undefined
+
   return (
     <ErrorBoundary>
-      <div className="flex h-full flex-col gap-8 overflow-hidden p-8">
-        <div className="flex flex-col gap-4 overflow-y-auto">
+      <div className="flex h-full flex-col overflow-hidden">
+        {showStagesBar && <StagesBar currentStep={currentStep as TStep} />}
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-8">
           {stageId === 'loginCAP' && (
             <ViewLoginCAP>
               <FormCAPLogin onSubmit={handleLoginCAP} />
@@ -129,6 +151,8 @@ const Home = () => {
               />
             </ViewSharingConsentBank>
           )}
+
+          {stageId === 'retrieveEDP' && <ViewRetrieveEDP />}
 
           {stageId === 'selectLender' && (
             <ViewSelectLender>
@@ -151,7 +175,7 @@ const Home = () => {
         </div>
       </div>
       {modalId !== null && (
-        <div className="fixed bottom-0 left-0 right-0 top-0 bg-[rgba(0,0,0,0.5)]">
+        <div className="fixed top-0 right-0 bottom-0 left-0 bg-[rgba(0,0,0,0.5)]">
           <div className="mx-auto my-[10vh] flex h-[80vh] w-[50vw] flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
             <div className="flex flex-col gap-4 bg-green-900 p-4">
               {modalId === 'edp' && stageId == 'connectEDP' && (
@@ -275,7 +299,7 @@ const Home = () => {
                   <div className="flex flex-col gap-4">
                     <ViewEDPVerified
                       onClose={() => {
-                        setStageId('selectLender')
+                        setStageId('retrieveEDP')
                         setModalId(null)
                       }}
                     />
