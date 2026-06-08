@@ -1,11 +1,54 @@
 #!/bin/bash
-# Allow ENV to be provided as an argument, default to 'dev'
-ENV="${1:-dev}"
+# Upload mTLS key + certificate bundle to AWS Secrets Manager.
+#
+# Usage:
+#   ./create_secrets.sh [ENV] [-k|--key KEY_PATH] [-b|--bundle BUNDLE_PATH]
+#
+#   ENV            Environment / secret prefix (default: dev)
+#   -k, --key      Path to the mTLS private key PEM
+#                  (default: ../certs/cap-demo-certs/cap-demo-key.pem)
+#   -b, --bundle   Path to the mTLS certificate bundle PEM
+#                  (default: ../certs/cap-demo-certs/cap-demo-bundle.pem)
+#
+# Examples:
+#   ./create_secrets.sh dev
+#   ./create_secrets.sh dev --key ./dev-key.pem --bundle ./dev-bundle.pem
 
-# Define file paths for your local certificate files
+usage() {
+  sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
+  exit "${1:-0}"
+}
+
+# Defaults
+ENV="dev"
 MTLS_KEY_PATH="../certs/cap-demo-certs/cap-demo-key.pem"
 MTLS_BUNDLE_PATH="../certs/cap-demo-certs/cap-demo-bundle.pem"
 # SERVER_CA_PATH="../certs/directory-server-certificates/bundle.pem"
+
+# Parse arguments: ENV is an optional positional, key/bundle are flags
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -k|--key)
+      MTLS_KEY_PATH="$2"
+      shift 2
+      ;;
+    -b|--bundle)
+      MTLS_BUNDLE_PATH="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage 0
+      ;;
+    -*)
+      echo "Error: unknown option '$1'" >&2
+      usage 1
+      ;;
+    *)
+      ENV="$1"
+      shift
+      ;;
+  esac
+done
 
 # Define secret name and description
 SECRET_NAME="${ENV}/perseus-demo-cap/mtls-key-bundle"
