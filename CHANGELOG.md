@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v2.1.0] - 2026-06-09
+
+### Added
+
+- mTLS debug logging of the client certificate's decoded roles, member and application (alongside the existing CN)
+- `scripts/check-cert.ts` (`npm run check-cert -- <env>`) to inspect the mTLS certificate stored in AWS Secrets Manager and flag the trust-framework registry its role is scoped to
+- Progress indicator / stages bar across the CAP flow
+- CAP "setup complete" view
+- Bank sharing-consent view
+- Meter data shown on the final EDP screen
+
+### Changed
+
+- Upgrade to Next.js 16, React 19, Tailwind CSS 4 and ESLint 9 (flat config), with related build/tooling config updates
+- Move `SECRET_COOKIE_PASSWORD` to AWS Secrets Manager
+- `scripts/create_secrets.sh` accepts `--key`/`--bundle` paths from the command line
+- Document uploading certificates to Secrets Manager (leaf + intermediate bundle) and inspecting a stored certificate in the README
+- Bump `openid-client` and update CDK deployment
+
+### Fixed
+
+- `NEXT_PUBLIC_SERVER` naming mismatch that caused the prod environment to use preprod servers, plus other environment-variable handling errors
+
 ## [v2.0.0] - 2026-02-18
 
 ### Added
