@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "ts-lint": "tsc --noEmit --incremental",
-    "start": "next start"
+    "start": "next start",
+    "check-cert": "tsx scripts/check-cert.ts"
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.1049.0",
@@ -37,6 +38,7 @@
     "eslint-plugin-prettier": "^5.5.5",
     "prettier": "^3.8.3",
     "tailwindcss": "^4.3.0",
+    "tsx": "^4.19.3",
     "typescript": "^5.9.3"
   }
 }

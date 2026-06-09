@@ -1,10 +1,12 @@
 import * as undici from 'undici'
 import { readFileSync } from 'fs'
 import { X509Certificate } from 'crypto'
+import * as x509 from '@peculiar/x509'
 import {
   GetSecretValueCommand,
   SecretsManagerClient,
 } from '@aws-sdk/client-secrets-manager'
+import { decodeApplication, decodeMember, decodeRoles } from './ib1Cert'
 
 export interface ICertificates {
   mtlsKey: string
@@ -195,6 +197,33 @@ export const createCustomFetch = async (config?: IClientConfig) => {
       const subjectCN = cnMatch ? cnMatch[1] : 'unknown'
       console.log(`[mTLS] Client certificate CN: ${subjectCN}`)
       console.log(`[mTLS] Bundle contains ${certMatches.length} certificate(s)`)
+
+      // Decode the IB1 identity fields so role-related auth failures (e.g. a
+      // 401 "Client certificate does not include role ...") are diagnosable
+      // from the logs. Each is guarded independently so a missing extension
+      // logs a warning rather than throwing inside the request path.
+      const ib1Cert = new x509.X509Certificate(certMatches[0])
+      try {
+        console.log(
+          `[mTLS] Client certificate roles: ${JSON.stringify(decodeRoles(ib1Cert))}`,
+        )
+      } catch (e) {
+        console.warn(`[mTLS] Could not decode certificate roles: ${e}`)
+      }
+      try {
+        console.log(
+          `[mTLS] Client certificate member: ${decodeMember(ib1Cert)}`,
+        )
+      } catch (e) {
+        console.warn(`[mTLS] Could not decode certificate member: ${e}`)
+      }
+      try {
+        console.log(
+          `[mTLS] Client certificate application: ${decodeApplication(ib1Cert)}`,
+        )
+      } catch (e) {
+        console.warn(`[mTLS] Could not decode certificate application: ${e}`)
+      }
     } catch (e) {
       console.warn(`[mTLS] Could not parse client certificate: ${e}`)
     }

@@ -11,6 +11,8 @@ A simple NextJS web application showing the perseus authentication and authorisa
 - [Development with docker](#development-with-docker)
 - [Message Delivery Endpoint](#message-delivery-endpoint)
 - [Certificates and keys](#certificates-and-keys)
+  - [Uploading certificates to AWS Secrets Manager](#uploading-certificates-to-aws-secrets-manager)
+  - [Inspecting a stored certificate](#inspecting-a-stored-certificate)
   - [Using KMS keys](#using-kms-keys)
 - [Using the CLI](#using-the-cli)
   - [Configuration](#configuration)
@@ -106,6 +108,35 @@ The client key and bundle are used for mutual TLS.
 For local development, the app uses local files. In production, these are stored in AWS Secrets Manager.
 
 For a guide to creating certificates using the directory see [Generate a testing key and certificate](docs/generate_certificates.md)
+
+### Uploading certificates to AWS Secrets Manager
+
+In deployed environments the key and bundle are read from the Secrets Manager secret `<env>/perseus-demo-cap/mtls-key-bundle`. Use `scripts/create_secrets.sh` to create or update it (requires AWS credentials for the target account).
+
+The `mtlsBundle` must be the **client (leaf) certificate concatenated with the intermediate CA certificate** for the directory client issuer — leaf first, intermediate second. A leaf-only bundle will fail the mTLS handshake. Build it with:
+
+```bash
+cat client-cert.pem intermediate.pem > client-bundle.pem
+```
+
+Then upload, passing the key and bundle paths (the env defaults to `dev`):
+
+```bash
+cd scripts
+./create_secrets.sh dev --key ../path/to/client-key.pem --bundle ../path/to/client-bundle.pem
+```
+
+Run `./create_secrets.sh --help` for all options. If `--key`/`--bundle` are omitted it falls back to the local `../certs/cap-demo-certs/` paths.
+
+### Inspecting a stored certificate
+
+To verify what is actually stored in Secrets Manager — subject, validity, and the decoded IB1 roles/member/application — run:
+
+```bash
+npm run check-cert -- dev
+```
+
+This decodes each certificate in the bundle and flags whether the `carbon-accounting-provider` role is present and which trust-framework registry host it is scoped to (a role scoped to the wrong environment, e.g. `sandbox` instead of `development`, causes a `401 ... does not include role` at token exchange).
 
 ### Using KMS keys
 
