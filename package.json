@@ -21,7 +21,7 @@
     "@types/react-dom": "^19.2.3",
     "asn1js": "^3.0.10",
     "iron-session": "^8.0.4",
-    "next": "^16.2.6",
+    "next": "^16.2.11",
     "openid-client": "^6.8.4",
     "postcss": "^8.4.27",
     "prettier-plugin-tailwindcss": "^0.6.14",
