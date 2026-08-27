@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+
+- Request the current Registry License URL as the OAuth scope, `…/scheme/perseus/license/energy-consumption-edp-cap/2026-03-12`. The retired `energy-consumption-data/2024-12-05` does not resolve in the Registry, and is not the scope the authorization server advertises
+
 ## [v2.1.0] - 2026-06-09
 
 ### Added

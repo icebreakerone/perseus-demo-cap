@@ -138,8 +138,14 @@ export const initializeClientConfig = async (
     mtlsKey: certificates.mtlsKey,
     mtlsBundle: certificates.mtlsBundle,
     caBundle: certificates.caBundle,
+    // Per the IB1 OAuth profile the scope is a Registry License URL, so it
+    // changes whenever the Registry publishes a new version of the license, and
+    // the Ory client registration must list the version requested here.
+    // The `+` separates the two scopes: URLSearchParams encodes it as %2B, and
+    // the authorization server decodes it back to a space when forwarding to
+    // Hydra. Do not replace it with a literal space without changing that too.
     scope:
-      'https://registry.core.sandbox.trust.ib1.org/scheme/perseus/license/energy-consumption-data/2024-12-05+offline_access',
+      'https://registry.core.sandbox.trust.ib1.org/scheme/perseus/license/energy-consumption-edp-cap/2026-03-12+offline_access',
     response_type: 'code',
     grant_type: 'authorization_code',
     post_login_route: process.env.NEXT_PUBLIC_REDIRECT_URL as string,
