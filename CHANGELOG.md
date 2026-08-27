@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Request the current Registry License URL as the OAuth scope, `…/scheme/perseus/license/energy-consumption-edp-cap/2026-03-12`. The retired `energy-consumption-data/2024-12-05` does not resolve in the Registry, and is not the scope the authorization server advertises
+- Request the current Registry License URL as the OAuth scope, `…/scheme/perseus/license/energy-consumption-edp-cap/2026-03-12`. The license was renamed as well as re-dated, so the retired `energy-consumption-data/2024-12-05` no longer resolves in the Registry, and is not the scope either demo authorization server advertises. The Ory client registration must list the version requested here
 
 ## [v2.1.0] - 2026-06-09
 
