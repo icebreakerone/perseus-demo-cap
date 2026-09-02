@@ -6,7 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Request the current Registry License URL as the OAuth scope, `…/scheme/perseus/license/energy-consumption-edp-cap/2026-03-12`. The license was renamed as well as re-dated, so the retired `energy-consumption-data/2024-12-05` no longer resolves in the Registry, and is not the scope either demo authorization server advertises. The Ory client registration must list the version requested here
+- Request `…/scheme/perseus/license/energy-consumption-emissions-edp-cap-fsp/2026-03-12` as the OAuth scope. The retired `energy-consumption-data/2024-12-05` was renamed as well as re-dated, so it no longer resolves in the Registry and is not a scope either demo authorization server advertises
+- This demo takes consent for the EDP, the CAP and the FSP in a single permission, so it requests the pass through license rather than `energy-consumption-edp-cap/2026-03-12`, which covers only the EDP to CAP leg. Both are valid for the energy consumption data API, the Scheme Catalog Requirements carry `ib1:requireOneOrMoreOf` on `dcterms:license`. The Ory client registration must list whichever version is requested here
 
 ## [v2.1.0] - 2026-06-09
 
