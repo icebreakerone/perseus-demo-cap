@@ -25,6 +25,10 @@ export interface IClientConfig extends ICertificates {
   code_challenge_method: string
   protectedResourceUrl: URL
   skipServerVerification?: boolean
+  // Hostnames whose server certificate is not verified, while every other host
+  // is still verified as normal. Used by the CLI to talk to a local server with
+  // a self-signed certificate without dropping verification everywhere.
+  insecureHosts?: string[]
 }
 
 export const resolveAppEnv = () => {
@@ -240,15 +244,27 @@ export const createCustomFetch = async (config?: IClientConfig) => {
       console.warn(`[mTLS] Could not parse client certificate: ${e}`)
     }
 
-  const agent = new undici.Agent({
-    connect: {
-      key: clientConfig.mtlsKey.trim(),
-      // Use concatenated string format - ensure proper newline separation
-      cert: certBundle,
-      ca: clientConfig.caBundle?.trim(),
-      rejectUnauthorized,
-    },
-  })
+  const connect = {
+    key: clientConfig.mtlsKey.trim(),
+    // Use concatenated string format - ensure proper newline separation
+    cert: certBundle,
+    ca: clientConfig.caBundle?.trim(),
+    rejectUnauthorized,
+  }
+
+  const agent = new undici.Agent({ connect })
+
+  // A second agent used only for insecureHosts, so skipping verification for a
+  // local self-signed server cannot silently weaken requests to any other host.
+  const insecureHosts = new Set(clientConfig.insecureHosts ?? [])
+  const insecureAgent =
+    rejectUnauthorized && insecureHosts.size > 0
+      ? new undici.Agent({ connect: { ...connect, rejectUnauthorized: false } })
+      : undefined
+  if (insecureAgent)
+    console.log(
+      `[mTLS] Server certificate verification disabled for: ${(clientConfig.insecureHosts ?? []).join(', ')}`,
+    )
 
   return async (
     url: string | URL,
@@ -260,7 +276,10 @@ export const createCustomFetch = async (config?: IClientConfig) => {
       console.log(`[mTLS] Making request to: ${urlObj.href}`)
     return undici.fetch(url, {
       ...options,
-      dispatcher: agent,
+      dispatcher:
+        insecureAgent && insecureHosts.has(urlObj.hostname)
+          ? insecureAgent
+          : agent,
     }) as unknown as Response
   }
 }

@@ -30,6 +30,8 @@ CLI_SKIP_SERVER_VERIFICATION=false # Testing only, for servers running with sel
 CLI_SERVER_CA_PATH=../certs/cap-demo-certs/cap-demo-key.pem # Only required if CLI_SKIP_SERVER_VERIFICATION is enabled
 ```
 
+To test a server running on localhost with a self-signed certificate, pass `--insecure` (`-k`) to any of the commands below instead, e.g. `npm run start -- --insecure`. It skips server certificate verification for `localhost`, `127.0.0.1` and `[::1]` only, leaving any other host verified.
+
 ## Running the cli
 
 The cli uses two scripts, get_code which generates an authorisation url, and callback_server which receives the authorisation code, exchanges it for a token, uses the token to retrieve data from the protected endpoint, and finally requests the permission record from the authentication server.

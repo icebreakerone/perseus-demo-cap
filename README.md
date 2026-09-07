@@ -160,6 +160,14 @@ The test callback server can be started with `npm run start`.
 
 See [edp_checks.md](edp_checks.md) for a detailed guide to testing an EDP implementation with this cli.
 
+### Options
+
+| Option | Description |
+| ------ | ----------- |
+| `--insecure`, `-k` | Do not verify the server certificate for `localhost`, `127.0.0.1` or `[::1]`. Other hosts are still verified. |
+
+Pass options after `--` when using npm, e.g. `npm run get_code -- --insecure`.
+
 ### Configuration
 
 The CLI reads its configuration from `cli/config.ts`. Every value can also be overridden via environment variables at execution time:
@@ -184,13 +192,12 @@ Authentication mTLS endpoint: https://localhost:8000
 Resource mTLS endpoint:       https://localhost:8010
 ```
 
-To run the CLI against this environment (self-signed certificates, local ports):
+Local servers usually run with self-signed certificates, which otherwise fail with `SELF_SIGNED_CERT_IN_CHAIN`. Pass `--insecure` (`-k`) to skip server certificate verification for loopback hosts:
 
 ```
 CLI_PUBLIC_SERVER=https://localhost:8000 \
 CLI_PROTECTED_RESOURCE_URL=https://localhost:8010/datasources/... \
-CLI_SKIP_SERVER_VERIFICATION=true \
-npm run get_code
+npm run get_code -- --insecure
 ```
 
 Similarly for the callback server:
@@ -198,9 +205,10 @@ Similarly for the callback server:
 ```
 CLI_PUBLIC_SERVER=https://localhost:8000 \
 CLI_PROTECTED_RESOURCE_URL=https://localhost:8010/datasources/... \
-CLI_SKIP_SERVER_VERIFICATION=true \
-npm run start
+npm run start -- --insecure
 ```
+
+`--insecure` only applies to `localhost`, `127.0.0.1` and `[::1]`, so a run against a deployed server is still verified. To skip verification for every host regardless (for example, a self-signed server on another machine), set `CLI_SKIP_SERVER_VERIFICATION=true` instead.
 
 An alternative to skipping verification for self signed certificates is to supply a bundle for the self signed server certificate via CLI_SERVER_CA_PATH. 
 

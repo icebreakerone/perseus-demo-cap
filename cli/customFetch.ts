@@ -20,6 +20,20 @@ const serverCaBundle = (() => {
   }
 })()
 
+// --insecure only covers loopback hosts, so warn rather than fail silently when
+// it is passed for a deployment that is not local.
+if (config.insecureLocalhost && config.insecureHosts) {
+  const targets = [
+    config.publicServer,
+    config.mTLSAuthorisationServer,
+    config.protectedResourceUrl,
+  ]
+  if (!targets.some(url => config.insecureHosts!.includes(url.hostname)))
+    console.warn(
+      '⚠️  --insecure was given but no configured server is on localhost; certificates will still be verified.',
+    )
+}
+
 console.log('MTLS key path:', config.mtlsKeyPath)
 console.log('MTLS bundle path:', config.mtlsBundlePath)
 console.log('Server CA bundle path:', config.serverCaPath)
@@ -29,6 +43,7 @@ const certificateOverrides = {
   mtlsBundle: readFileSync(config.mtlsBundlePath, 'utf8'),
   caBundle: serverCaBundle,
   skipServerVerification: config.skipServerVerification,
+  insecureHosts: config.insecureHosts,
 }
 
 const clientConfigPromise = initializeClientConfig({
