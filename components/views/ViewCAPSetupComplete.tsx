@@ -2,36 +2,146 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
 import ErrorBoundary from '@/app/error'
-
-/*
-interface IProps {
-  children: React.ReactElement
-}
-*/
-
-type EnergyPoint = {
-  from: string
-  to: string
-  takenAt: string
-  energy: { value: number; unitCode: string }
-  cumulative: { value: number; unitCode: string }
-}
+import { IDateRange } from '@lib/dateRange'
+import {
+  bucketByMonth,
+  cumulativeByDay,
+  IEnergyPoint,
+  MONTH_NAMES,
+  niceTicks,
+  resolveUnit,
+  windowDays,
+} from '@lib/energySeries'
 
 type TMeterData = {
   id: string
   type: string
+  availableMeasures?: string[]
   location?: {
     ukPostcodeOutcode?: string
   }
 }
 interface IMetersData {
-  data: [TMeterData]
+  data: TMeterData[]
 }
 
-// const ViewCAPSetupComplete = ({ children }: IProps) => {
+type TMonthTick = {
+  key: string
+  label: string
+  year?: string
+  x: number
+}
+
+const CHART = {
+  width: 720,
+  height: 240,
+  // Wider left gutter than the axis used to need, for tick labels plus the
+  // rotated unit title; deeper bottom gutter for a month label plus a year.
+  padding: { top: 20, right: 20, bottom: 36, left: 60 },
+}
+const PLOT_WIDTH = CHART.width - CHART.padding.left - CHART.padding.right
+const PLOT_HEIGHT = CHART.height - CHART.padding.top - CHART.padding.bottom
+
+/**
+ * The axes, gridlines and labels shared by both charts. Marks are passed in as
+ * children with their scaling already applied by the caller.
+ */
+const ChartFrame = ({
+  children,
+  monthTicks,
+  unitLabel,
+  yTicks,
+}: {
+  children: React.ReactNode
+  monthTicks: TMonthTick[]
+  unitLabel: string
+  yTicks: number[]
+}) => {
+  const { padding } = CHART
+  const topTick = yTicks[yTicks.length - 1] || 1
+  const baseline = padding.top + PLOT_HEIGHT
+
+  return (
+    <svg
+      height="240"
+      viewBox={`0 0 ${CHART.width} ${CHART.height}`}
+      width="100%"
+    >
+      {yTicks.map(tick => {
+        const y = baseline - (tick / topTick) * PLOT_HEIGHT
+        return (
+          <g key={`y-${tick}`}>
+            <line
+              stroke="#E5E7EB"
+              x1={padding.left}
+              x2={padding.left + PLOT_WIDTH}
+              y1={y}
+              y2={y}
+            />
+            <text
+              fill="#6B7280"
+              fontSize="10"
+              textAnchor="end"
+              x={padding.left - 6}
+              y={y + 3}
+            >
+              {tick.toLocaleString('en-GB')}
+            </text>
+          </g>
+        )
+      })}
+      <line
+        stroke="#9CA3AF"
+        x1={padding.left}
+        x2={padding.left}
+        y1={padding.top}
+        y2={baseline}
+      />
+      <line
+        stroke="#9CA3AF"
+        x1={padding.left}
+        x2={padding.left + PLOT_WIDTH}
+        y1={baseline}
+        y2={baseline}
+      />
+      {unitLabel ? (
+        <text
+          fill="#6B7280"
+          fontSize="10"
+          textAnchor="middle"
+          transform={`rotate(-90 12 ${padding.top + PLOT_HEIGHT / 2})`}
+          x={12}
+          y={padding.top + PLOT_HEIGHT / 2}
+        >
+          {unitLabel}
+        </text>
+      ) : null}
+      {monthTicks.map(tick => (
+        <text
+          fill="#6B7280"
+          fontSize="10"
+          key={`x-${tick.key}`}
+          textAnchor="middle"
+          x={tick.x}
+          y={baseline + 14}
+        >
+          <tspan x={tick.x}>{tick.label}</tspan>
+          {tick.year ? (
+            <tspan dy="11" x={tick.x}>
+              {tick.year}
+            </tspan>
+          ) : null}
+        </text>
+      ))}
+      {children}
+    </svg>
+  )
+}
+
 const ViewCAPSetupComplete = () => {
   const [meterData, setMeterData] = useState<IMetersData | null>(null)
   const [data, setData] = useState<unknown>(null)
+  const [range, setRange] = useState<IDateRange | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -47,11 +157,12 @@ const ViewCAPSetupComplete = () => {
         const payload = (await response.json()) as {
           meterData?: unknown
           data?: unknown
+          range?: IDateRange
         }
-        console.log('ViewCAPSetupComplete # Data loaded successfully:', payload)
         if (!isMounted) return
         setMeterData((payload.meterData as IMetersData) ?? null)
         setData(payload.data ?? null)
+        setRange(payload.range ?? null)
       } catch (err) {
         if (!isMounted) return
         setError(err instanceof Error ? err.message : 'Failed to load data')
@@ -65,263 +176,119 @@ const ViewCAPSetupComplete = () => {
     }
   }, [])
 
-  const chartEntries = useMemo<EnergyPoint[]>(() => {
+  const chartEntries = useMemo<IEnergyPoint[]>(() => {
     const payload = data as { data?: unknown } | null
-    return Array.isArray(payload?.data) ? (payload?.data as EnergyPoint[]) : []
+    return Array.isArray(payload?.data) ? (payload?.data as IEnergyPoint[]) : []
   }, [data])
 
-  const chartConfig = useMemo(() => {
-    const width = 720
-    const height = 240
-    const padding = { top: 20, right: 20, bottom: 30, left: 48 }
-    const plotWidth = width - padding.left - padding.right
-    const plotHeight = height - padding.top - padding.bottom
+  const barChart = useMemo(() => {
+    if (!range || chartEntries.length === 0) return null
+    const { padding } = CHART
+    const unit = resolveUnit(chartEntries, 'energy')
+    const buckets = bucketByMonth(chartEntries, range).map(bucket => ({
+      ...bucket,
+      value: bucket.value * unit.scale,
+    }))
+    const max = buckets.reduce((highest, b) => Math.max(highest, b.value), 0)
+    const yTicks = niceTicks(max)
+    const topTick = yTicks[yTicks.length - 1] || 1
+    const barWidth = PLOT_WIDTH / Math.max(buckets.length, 1)
 
-    const energyValues = chartEntries.map(entry =>
-      Number(entry.energy?.value ?? 0),
-    )
-    const cumulativeValues = chartEntries.map(entry =>
-      Number(entry.cumulative?.value ?? 0),
-    )
-    const maxEnergy = Math.max(0, ...energyValues)
-    const maxCumulative = Math.max(0, ...cumulativeValues)
-
-    const xMinLabel = chartEntries[0]?.from
-    const xMaxLabel = chartEntries[chartEntries.length - 1]?.to
-
-    return {
-      width,
-      height,
-      padding,
-      plotWidth,
-      plotHeight,
-      energyValues,
-      cumulativeValues,
-      maxEnergy,
-      maxCumulative,
-      xMinLabel,
-      xMaxLabel,
-    }
-  }, [chartEntries])
-
-  const formatTimeDate = (isoString?: string) => {
-    if (!isoString) return { date: '', time: '' }
-    const date = new Date(isoString)
-    if (Number.isNaN(date.getTime())) return { date: '', time: '' }
-    const iso = date.toISOString()
-    return {
-      time: iso.slice(11, 16),
-      date: iso.slice(0, 10),
-    }
-  }
-
-  /*
-  const timeLabel = (isoString: string) => {
-    const date = new Date(isoString)
-    if (Number.isNaN(date.getTime())) return ''
-    return date.toISOString().slice(11, 16)
-  }
-  * */
-
-  const barChartSvg = useMemo(() => {
-    const {
-      width,
-      height,
-      padding,
-      plotWidth,
-      plotHeight,
-      energyValues,
-      maxEnergy,
-      xMinLabel,
-      xMaxLabel,
-    } = chartConfig
-    const barCount = Math.max(energyValues.length, 1)
-    const barWidth = plotWidth / barCount
+    const monthTicks: TMonthTick[] = buckets.map((bucket, index) => ({
+      key: bucket.key,
+      label: MONTH_NAMES[bucket.month],
+      // Year on the first bar and each January, so two calendar years in one
+      // window cannot be confused.
+      year:
+        index === 0 || bucket.month === 0
+          ? `’${String(bucket.year).slice(2)}`
+          : undefined,
+      x: padding.left + (index + 0.5) * barWidth,
+    }))
 
     return (
-      <svg height="240" viewBox={`0 0 ${width} ${height}`} width="100%">
-        <line
-          stroke="#9CA3AF"
-          x1={padding.left}
-          x2={padding.left}
-          y1={padding.top}
-          y2={padding.top + plotHeight}
-        />
-        <line
-          stroke="#9CA3AF"
-          x1={padding.left}
-          x2={padding.left + plotWidth}
-          y1={padding.top + plotHeight}
-          y2={padding.top + plotHeight}
-        />
-        <text
-          fill="#6B7280"
-          fontSize="10"
-          textAnchor="end"
-          x={padding.left - 6}
-          y={padding.top + 4}
-        >
-          {maxEnergy.toFixed(0)}
-        </text>
-        <text
-          fill="#6B7280"
-          fontSize="10"
-          textAnchor="end"
-          x={padding.left - 6}
-          y={padding.top + plotHeight}
-        >
-          0
-        </text>
-        <text
-          fill="#6B7280"
-          fontSize="10"
-          textAnchor="start"
-          x={padding.left}
-          y={padding.top + plotHeight + 14}
-        >
-          <tspan dy="0" x={padding.left}>
-            {formatTimeDate(xMinLabel).time}
-          </tspan>
-          <tspan dy="12" x={padding.left}>
-            {formatTimeDate(xMinLabel).date}
-          </tspan>
-        </text>
-        <text
-          fill="#6B7280"
-          fontSize="10"
-          textAnchor="end"
-          x={padding.left + plotWidth}
-          y={padding.top + plotHeight + 14}
-        >
-          <tspan dy="0" x={padding.left + plotWidth}>
-            {formatTimeDate(xMaxLabel).time}
-          </tspan>
-          <tspan dy="12" x={padding.left + plotWidth}>
-            {formatTimeDate(xMaxLabel).date}
-          </tspan>
-        </text>
-        {energyValues.map((value, index) => {
-          const safeMax = maxEnergy || 1
-          const barHeight = (value / safeMax) * plotHeight
-          const x = padding.left + index * barWidth + barWidth * 0.1
-          const y = padding.top + plotHeight - barHeight
-          const w = barWidth * 0.8
+      <ChartFrame
+        monthTicks={monthTicks}
+        unitLabel={unit.label}
+        yTicks={yTicks}
+      >
+        {buckets.map((bucket, index) => {
+          const barHeight = (bucket.value / topTick) * PLOT_HEIGHT
           return (
             <rect
               fill="#3B82F6"
               height={barHeight}
-              key={`bar-${index}`}
-              width={w}
-              x={x}
-              y={y}
+              key={`bar-${bucket.key}`}
+              width={barWidth * 0.8}
+              x={padding.left + index * barWidth + barWidth * 0.1}
+              y={padding.top + PLOT_HEIGHT - barHeight}
             />
           )
         })}
-      </svg>
+      </ChartFrame>
     )
-  }, [chartConfig])
+  }, [chartEntries, range])
 
-  const lineChartSvg = useMemo(() => {
-    const {
-      width,
-      height,
-      padding,
-      plotWidth,
-      plotHeight,
-      cumulativeValues,
-      maxCumulative,
-      xMinLabel,
-      xMaxLabel,
-    } = chartConfig
-    const pointCount = Math.max(cumulativeValues.length, 1)
-    const stepX = plotWidth / Math.max(pointCount - 1, 1)
-    const safeMax = maxCumulative || 1
+  const lineChart = useMemo(() => {
+    if (!range || chartEntries.length === 0) return null
+    const { padding } = CHART
+    const unit = resolveUnit(chartEntries, 'cumulative')
+    const days = cumulativeByDay(chartEntries, range).map(day => ({
+      ...day,
+      value: day.value * unit.scale,
+    }))
+    if (days.length === 0) return null
+    const totalDays = windowDays(range)
+    const max = days.reduce((highest, day) => Math.max(highest, day.value), 0)
+    const yTicks = niceTicks(max)
+    const topTick = yTicks[yTicks.length - 1] || 1
+    const xFor = (dayIndex: number) =>
+      padding.left + (dayIndex / totalDays) * PLOT_WIDTH
 
-    const points = cumulativeValues
-      .map((value, index) => {
-        const x = padding.left + index * stepX
-        const y = padding.top + plotHeight - (value / safeMax) * plotHeight
-        return `${x},${y}`
-      })
+    // The same month spine as the bars, so the two charts read against one
+    // time axis; labels sit at the centre of each month's span.
+    const buckets = bucketByMonth(chartEntries, range)
+    const monthTicks: TMonthTick[] = buckets.map((bucket, index) => {
+      const nextDayIndex = buckets[index + 1]?.dayIndex ?? totalDays
+      return {
+        key: bucket.key,
+        label: MONTH_NAMES[bucket.month],
+        year:
+          index === 0 || bucket.month === 0
+            ? `’${String(bucket.year).slice(2)}`
+            : undefined,
+        x: xFor((bucket.dayIndex + nextDayIndex) / 2),
+      }
+    })
+
+    const points = days
+      .map(
+        day =>
+          `${xFor(day.dayIndex)},${
+            padding.top + PLOT_HEIGHT - (day.value / topTick) * PLOT_HEIGHT
+          }`,
+      )
       .join(' ')
 
     return (
-      <svg height="240" viewBox={`0 0 ${width} ${height}`} width="100%">
-        <line
-          stroke="#9CA3AF"
-          x1={padding.left}
-          x2={padding.left}
-          y1={padding.top}
-          y2={padding.top + plotHeight}
-        />
-        <line
-          stroke="#9CA3AF"
-          x1={padding.left}
-          x2={padding.left + plotWidth}
-          y1={padding.top + plotHeight}
-          y2={padding.top + plotHeight}
-        />
-        <text
-          fill="#6B7280"
-          fontSize="10"
-          textAnchor="end"
-          x={padding.left - 6}
-          y={padding.top + 4}
-        >
-          {maxCumulative.toFixed(0)}
-        </text>
-        <text
-          fill="#6B7280"
-          fontSize="10"
-          textAnchor="end"
-          x={padding.left - 6}
-          y={padding.top + plotHeight}
-        >
-          0
-        </text>
-        <text
-          fill="#6B7280"
-          fontSize="10"
-          textAnchor="start"
-          x={padding.left}
-          y={padding.top + plotHeight + 14}
-        >
-          <tspan dy="0" x={padding.left}>
-            {formatTimeDate(xMinLabel).time}
-          </tspan>
-          <tspan dy="12" x={padding.left}>
-            {formatTimeDate(xMinLabel).date}
-          </tspan>
-        </text>
-        <text
-          fill="#6B7280"
-          fontSize="10"
-          textAnchor="end"
-          x={padding.left + plotWidth}
-          y={padding.top + plotHeight + 14}
-        >
-          <tspan dy="0" x={padding.left + plotWidth}>
-            {formatTimeDate(xMaxLabel).time}
-          </tspan>
-          <tspan dy="12" x={padding.left + plotWidth}>
-            {formatTimeDate(xMaxLabel).date}
-          </tspan>
-        </text>
+      <ChartFrame
+        monthTicks={monthTicks}
+        unitLabel={unit.label}
+        yTicks={yTicks}
+      >
         <polyline
           fill="none"
           points={points}
           stroke="#10B981"
           strokeWidth={2}
         />
-      </svg>
+      </ChartFrame>
     )
-  }, [chartConfig])
+  }, [chartEntries, range])
 
   return (
     <ErrorBoundary>
       <p>Setup complete</p>
-
-      {/* <p>A: {error ? `Error: ${error}` : JSON.stringify(meterData)}</p> */}
 
       <div className="mt-4">
         <h2 className="mb-2 text-lg font-semibold">Meter details</h2>
@@ -342,7 +309,6 @@ const ViewCAPSetupComplete = () => {
           <p>Retrieving your meter list.</p>
         )}
       </div>
-      {/* <p>B: {error ? null : JSON.stringify(data)}</p> */}
 
       <div className="mt-4">
         <h2 className="mb-2 text-lg font-semibold">Energy data</h2>
@@ -351,19 +317,24 @@ const ViewCAPSetupComplete = () => {
             {error ? (
               <p>Charts unavailable due to error.</p>
             ) : chartEntries.length === 0 ? (
-              <p>No chart data available.</p>
+              <p>
+                No data returned
+                {range ? ` for ${range.from} to ${range.to}` : ''}.
+              </p>
             ) : (
               <>
-                <h3 className="font-semibold">Energy by time period</h3>
-                {barChartSvg}
-                {/*
-                <p className="text-sm text-gray-500">
-                  From {timeLabel(chartEntries[0].from)} to{' '}
-                  {timeLabel(chartEntries[chartEntries.length - 1].to)}
-                </p>
-                 */}
-                <h3 className="mt-6 font-semibold">Cumulative energy</h3>
-                {lineChartSvg}
+                {range ? (
+                  <p className="mb-4 text-sm text-gray-500">
+                    {chartEntries.length.toLocaleString('en-GB')} half-hourly
+                    readings from {range.from} to {range.to}.
+                  </p>
+                ) : null}
+                <h3 className="font-semibold">Energy by month</h3>
+                {barChart}
+                <h3 className="mt-6 font-semibold">
+                  Cumulative energy over the period
+                </h3>
+                {lineChart}
               </>
             )}
           </>
@@ -371,9 +342,6 @@ const ViewCAPSetupComplete = () => {
           <p>Retrieving your meter data…</p>
         )}
       </div>
-
-      {/* <p>You may now either:</p> */}
-      {/* <div className="ml-8">{children}</div> */}
     </ErrorBoundary>
   )
 }

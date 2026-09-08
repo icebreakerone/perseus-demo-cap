@@ -200,6 +200,14 @@ CLI_PROTECTED_RESOURCE_URL=https://localhost:8010/datasources/... \
 npm run get_code -- --insecure
 ```
 
+Only the origin of `CLI_PROTECTED_RESOURCE_URL` is used: the client builds the
+request path itself, and the metering window is computed rather than
+configured. Both the web app and the CLI ask for the previous twelve complete
+calendar months (see `lib/dateRange.ts`) — a year of half-hourly readings,
+about 17,500 points. The resource API serves windows longer than 60 days only
+compressed, so the request sends `Accept-Encoding: gzip`, and it rejects
+windows longer than 396 days outright.
+
 Similarly for the callback server:
 
 ```
@@ -216,7 +224,7 @@ Alternatively, to run against the demo apps:
 
 ```
 CLI_PUBLIC_SERVER=https://preprod.mtls.perseus-demo-authentication.ib1.org \
-CLI_PROTECTED_RESOURCE_URL=https://preprod.mtls.perseus-demo-energy.ib1.org/datasources/id/measure?from=2024-12-05T00:00:00Z&to=2024-12-06T00:00:00Z \
+CLI_PROTECTED_RESOURCE_URL=https://preprod.mtls.perseus-demo-energy.ib1.org/ \
 cli get_code.ts
 ```
 
@@ -224,7 +232,7 @@ Similarly for the callback server:
 
 ```
 CLI_PUBLIC_SERVER=https://preprod.mtls.perseus-demo-authentication.ib1.org \
-CLI_PROTECTED_RESOURCE_URL=https://preprod.mtls.perseus-demo-energy.ib1.org/datasources/id/measure?from=2024-12-05T00:00:00Z&to=2024-12-06T00:00:00Z \
+CLI_PROTECTED_RESOURCE_URL=https://preprod.mtls.perseus-demo-energy.ib1.org/ \
 cli npx tsx callback_server.ts
 ```
 

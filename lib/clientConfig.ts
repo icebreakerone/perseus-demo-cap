@@ -160,9 +160,13 @@ export const initializeClientConfig = async (
     grant_type: 'authorization_code',
     post_login_route: process.env.NEXT_PUBLIC_REDIRECT_URL as string,
     code_challenge_method: 'S256',
+    // Only the origin of this URL is ever used: every consumer builds a
+    // root-absolute path with new URL('/datasources/...', base), which
+    // discards the base's path and query. The metering window is computed in
+    // lib/dateRange, not configured here.
     protectedResourceUrl: new URL(
       process.env.NEXT_PUBLIC_PROTECTED_RESOURCE_URL ||
-        'https://preprod.mtls.perseus-demo-energy.ib1.org/datasources/id/measure?from=2024-12-05T00:00:00Z&to=2024-12-06T00:00:00Z',
+        'https://preprod.mtls.perseus-demo-energy.ib1.org/',
     ),
     skipServerVerification: false,
   }

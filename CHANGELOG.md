@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- Request the previous twelve complete calendar months rather than a hardcoded single day. The resource API now honours `from`/`to`; the window is computed in `lib/dateRange.ts` and shared by the web app and the CLI, so the provenance record's metering period cannot drift from the data actually requested
+- Aligned the window to month boundaries instead of a literal rolling year, so every bar in the monthly chart is a whole month. A rolling year touches thirteen calendar months, two of them partial
+- Send `Accept-Encoding: gzip` on the data request: the resource API serves windows longer than 60 days only compressed and returns `400 invalid_request` otherwise
+- Chart consumption as monthly bars and the cumulative reading as a daily line, replacing the half-hourly bars. A year is about 17,500 half-hourly readings, and the API has no granularity parameter, so both series are aggregated client side in `lib/energySeries.ts`. Readings are bucketed on `from`, the interval start — `to` would push each month's last reading into the next month, and `takenAt` has moved to one interval after `to`
+- Axes now carry rounded tick values, gridlines and a unit label; watt hours are shown as kWh, since a month of electricity in WHR runs to seven figures
+
+### Removed
+
+- `models/IConsumption.ts`, whose shape had not matched the resource API for some time and which nothing imported
+
 ## [v2.2.0] - 2026-09-02
 
 ### Fixed

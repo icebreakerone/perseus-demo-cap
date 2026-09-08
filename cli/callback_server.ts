@@ -4,6 +4,9 @@ import { readFileSync } from 'fs'
 
 import { clientConfig as clientConfigPromise, customFetch } from './customFetch'
 import { config } from './config'
+// Relative, not '@lib/...': the CLI is a standalone package and does not use
+// the root tsconfig's path aliases.
+import { lastTwelveCompleteMonths } from '../lib/dateRange'
 
 const app = express()
 const port = 3000
@@ -127,20 +130,31 @@ app.get('/callback', async (req, res) => {
 
     const meterId = firstMeter.id
     const meterMeasure = firstMeter.availableMeasures[0]
-    console.log(`📈 Fetching data for meter ${meterId} (${meterMeasure})`)
-    const dataResponse = await customFetch(
-      new URL(
-        `/datasources/${meterId}/${meterMeasure}?from=2024-12-05&to=2024-12-06`,
-        resolvedClientConfig.protectedResourceUrl,
-      ),
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${tokenData.access_token}`,
-          Accept: 'application/json',
-        },
-      },
+    const range = lastTwelveCompleteMonths()
+    console.log(
+      `📈 Fetching data for meter ${meterId} (${meterMeasure}) from ${range.from} to ${range.to}`,
     )
+    const dataUrl = new URL(
+      `/datasources/${encodeURIComponent(meterId)}/${encodeURIComponent(meterMeasure)}`,
+      resolvedClientConfig.protectedResourceUrl,
+    )
+    // Assigned wholesale rather than via searchParams.set so any query string
+    // on the configured base URL is replaced rather than merged into.
+    dataUrl.search = new URLSearchParams({
+      from: range.from,
+      to: range.to,
+    }).toString()
+    const dataResponse = await customFetch(dataUrl, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${tokenData.access_token}`,
+        Accept: 'application/json',
+        // Required: the resource API refuses windows longer than 60 days
+        // unless the client accepts a compressed response. undici still
+        // decodes the body for us.
+        'Accept-Encoding': 'gzip',
+      },
+    })
     if (!dataResponse.ok) {
       const errorText = await dataResponse.text()
       console.error(
@@ -151,7 +165,9 @@ app.get('/callback', async (req, res) => {
         .send(`Error fetching data from data server: ${errorText}`)
     }
     const data = await dataResponse.json()
-    console.log('✅ Meter data received')
+    console.log(
+      `✅ Meter data received (${data?.data?.length ?? 0} readings; the response body below is several MB)`,
+    )
     // Only run provenance-related code if ENABLE_PROVENANCE flag is set
     if (process.env.ENABLE_PROVENANCE === 'true') {
       console.log('🔐 Processing provenance data')
@@ -185,9 +201,10 @@ app.get('/callback', async (req, res) => {
         edp_member_id: 'https://member.core.sandbox.trust.ib1.org/m/7a1qv915',
         // Placeholder – not currently used in provenance-service matching logic
         bank_service_url: 'https://example.com/bank-service-url',
-        // Must match the metering period in the EDP transfer step
-        from_date: '2024-12-05',
-        to_date: '2024-12-06',
+        // Must match the metering period requested above, and in the EDP
+        // transfer step
+        from_date: range.from,
+        to_date: range.to,
       }
       console.log('✍️  Signing CAP record with provenance service')
       const capRecordEncoded = await fetch(
