@@ -41,7 +41,7 @@ CLI_PROTECTED_RESOURCE_URL=https://perseus-demo-energy.ib1.org
 
 7. **Fetch meter catalog** — GET `{protectedResourceUrl}/datasources/` (mTLS) with `Authorization: Bearer {access_token}`. Expect JSON with `data` array of meter objects including `id` and `availableMeasures`.
 
-8. **Fetch meter consumption data** — GET `{protectedResourceUrl}/datasources/{meterId}/{measure}?from=YYYY-MM-DD&to=YYYY-MM-DD` (mTLS) with Bearer token. Expect JSON response with consumption data (and optionally `provenance`).
+8. **Fetch meter consumption data** — GET `{protectedResourceUrl}/datasources/{meterId}/{measure}?from=YYYY-MM-DD&to=YYYY-MM-DD` (mTLS) with Bearer token. `from` is inclusive, `to` exclusive; a CAP requests the previous twelve complete calendar months. Readings are always half-hourly — there is no granularity parameter — so a year is about 17,500 points. Windows longer than 60 days are served only compressed, so send `Accept-Encoding: gzip`; windows longer than 396 days are rejected. Expect JSON response with consumption data (and optionally `provenance`).
 
 9. **Permissions verification** — POST `token` (refresh_token) to `/api/v1/permissions` (mTLS) on the authorisation server as form-urlencoded. Must succeed with 200 and valid JSON to confirm CAP has granted the expected permissions.
 

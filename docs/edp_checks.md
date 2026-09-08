@@ -80,10 +80,10 @@ Open the generated URL and complete authorisation and granting permissions. A su
 {
 "data":[
     {
-        "type":"Electricity",
+        "type":"electricity",
         "from":"2012-02-20T13:00:00Z",
         "to":"2012-02-20T13:30:00Z",
-        "takenAt":"2012-02-20T13:15:00Z",
+        "takenAt":"2012-02-20T14:00:00Z",
         "energy":{
             "value":976,
             "unitCode":"WHR",
@@ -112,8 +112,8 @@ Meter catalog URL: https://mtls.perseus-demo-energy.ib1.org//datasources/
 [mTLS] Making request to: https://mtls.perseus-demo-energy.ib1.org/datasources/
 ✅ Meter catalog received
 📈 Fetching data for meter S018011012261305588165 (import)
-[mTLS] Making request to: https://mtls.perseus-demo-energy.ib1.org/datasources/S018011012261305588165/import?from=2024-12-05&to=2024-12-06
-✅ Meter data received
+[mTLS] Making request to: https://mtls.perseus-demo-energy.ib1.org/datasources/S018011012261305588165/import?from=2025-09-01&to=2026-09-01
+✅ Meter data received (17520 readings; the response body below is several MB)
 🔍 Testing permissions with refresh token
 Requesting permissions from: https://mtls.perseus-demo-authentication.ib1.org/
 [mTLS] Making request to: https://mtls.perseus-demo-authentication.ib1.org/api/v1/permissions
