@@ -2,7 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [v2.3.0] - 2026-09-09
+
+### Added
+
+- `--insecure` (`-k`) on the CLI skips server certificate verification for loopback hosts only. A local authentication or resource API is normally run with a self-signed certificate, so a run against localhost failed with `SELF_SIGNED_CERT_IN_CHAIN`. Every other host is still verified, so a run against a deployed EDP cannot pass with a bad certificate chain, which matters for a tool whose job is checking conformance. `CLI_SKIP_SERVER_VERIFICATION` is unchanged and remains the way to skip verification for every host
+- `AGENTS.md`, guidance for coding agents working in this repository: the build commands, the architecture, the certificate handling, and the IB1 specifications and registry URLs the demo is bound by
 
 ### Changed
 
