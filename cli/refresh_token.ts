@@ -1,11 +1,14 @@
 import * as client from 'openid-client'
 import { clientConfig as clientConfigPromise, customFetch } from './customFetch'
+import { positionalArgs } from './config'
 
-const refreshToken = process.argv[2]
+// Read from positionalArgs so an option such as --insecure is not mistaken for
+// the token.
+const refreshToken = positionalArgs[0]
 
 if (!refreshToken) {
-  console.error('Usage: npm run refresh_token <refresh_token>')
-  console.error('   or: npx tsx refresh_token.ts <refresh_token>')
+  console.error('Usage: npm run refresh_token <refresh_token> [--insecure]')
+  console.error('   or: npx tsx refresh_token.ts <refresh_token> [--insecure]')
   process.exit(1)
 }
 

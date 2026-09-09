@@ -30,6 +30,8 @@ CLI_SKIP_SERVER_VERIFICATION=false # Testing only, for servers running with sel
 CLI_SERVER_CA_PATH=../certs/cap-demo-certs/cap-demo-key.pem # Only required if CLI_SKIP_SERVER_VERIFICATION is enabled
 ```
 
+To test a server running on localhost with a self-signed certificate, pass `--insecure` (`-k`) to any of the commands below instead, e.g. `npm run start -- --insecure`. It skips server certificate verification for `localhost`, `127.0.0.1` and `[::1]` only, leaving any other host verified.
+
 ## Running the cli
 
 The cli uses two scripts, get_code which generates an authorisation url, and callback_server which receives the authorisation code, exchanges it for a token, uses the token to retrieve data from the protected endpoint, and finally requests the permission record from the authentication server.
@@ -78,10 +80,10 @@ Open the generated URL and complete authorisation and granting permissions. A su
 {
 "data":[
     {
-        "type":"Electricity",
+        "type":"electricity",
         "from":"2012-02-20T13:00:00Z",
         "to":"2012-02-20T13:30:00Z",
-        "takenAt":"2012-02-20T13:15:00Z",
+        "takenAt":"2012-02-20T14:00:00Z",
         "energy":{
             "value":976,
             "unitCode":"WHR",
@@ -110,8 +112,8 @@ Meter catalog URL: https://mtls.perseus-demo-energy.ib1.org//datasources/
 [mTLS] Making request to: https://mtls.perseus-demo-energy.ib1.org/datasources/
 ✅ Meter catalog received
 📈 Fetching data for meter S018011012261305588165 (import)
-[mTLS] Making request to: https://mtls.perseus-demo-energy.ib1.org/datasources/S018011012261305588165/import?from=2024-12-05&to=2024-12-06
-✅ Meter data received
+[mTLS] Making request to: https://mtls.perseus-demo-energy.ib1.org/datasources/S018011012261305588165/import?from=2025-09-01&to=2026-09-01
+✅ Meter data received (17520 readings; the response body below is several MB)
 🔍 Testing permissions with refresh token
 Requesting permissions from: https://mtls.perseus-demo-authentication.ib1.org/
 [mTLS] Making request to: https://mtls.perseus-demo-authentication.ib1.org/api/v1/permissions

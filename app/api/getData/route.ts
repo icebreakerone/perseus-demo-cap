@@ -1,5 +1,6 @@
 import { createCustomFetch, getClientConfig, getSession } from '@/lib/auth'
 import { getClientConfigPromise } from '@lib/clientConfig'
+import { lastTwelveCompleteMonths } from '@lib/dateRange'
 import { NextRequest, NextResponse } from 'next/server'
 
 type TokenResponse = {
@@ -146,23 +147,33 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const meterId = firstMeter.id
   const meterMeasure = firstMeter.availableMeasures[0]
+  const range = lastTwelveCompleteMonths()
   console.log(
-    `API > getData # Fetching data for meter ${meterId} (${meterMeasure})`,
+    `API > getData # Fetching data for meter ${meterId} (${meterMeasure}) from ${range.from} to ${range.to}`,
   )
 
-  const dataResponse = await customFetch(
-    new URL(
-      `/datasources/${meterId}/${meterMeasure}?from=2024-12-05&to=2024-12-06`,
-      clientConfig.protectedResourceUrl,
-    ),
-    {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/json',
-      },
-    },
+  const dataUrl = new URL(
+    `/datasources/${encodeURIComponent(meterId)}/${encodeURIComponent(meterMeasure)}`,
+    clientConfig.protectedResourceUrl,
   )
+  // Assigned wholesale rather than via searchParams.set so any query string on
+  // the configured base URL is replaced rather than merged into.
+  dataUrl.search = new URLSearchParams({
+    from: range.from,
+    to: range.to,
+  }).toString()
+
+  const dataResponse = await customFetch(dataUrl, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/json',
+      // Required: the resource API refuses windows longer than 60 days unless
+      // the client accepts a compressed response. undici still decodes the
+      // body for us.
+      'Accept-Encoding': 'gzip',
+    },
+  })
   console.log(
     `API > getData # data response status: ${dataResponse.status} ${dataResponse.statusText}`,
   )
@@ -180,7 +191,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   console.log('API > getData # Data response received successfully')
 
   const data = await dataResponse.json()
-  console.log('Data:', data)
+  // Summarised, not dumped: a year of half-hourly readings is several MB.
+  console.log(
+    `API > getData # ${data?.data?.length ?? 0} readings for ${range.from} to ${range.to}`,
+  )
 
-  return NextResponse.json({ meterData, data }, { headers: corsHeaders })
+  // `data` is passed through verbatim so the demo shows what the EDP actually
+  // returned; `range` tells the client which window was asked for, so the
+  // chart's month spine does not depend on the browser's clock.
+  return NextResponse.json({ meterData, data, range }, { headers: corsHeaders })
 }
