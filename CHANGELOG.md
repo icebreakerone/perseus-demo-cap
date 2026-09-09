@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Send `Accept-Encoding: gzip` on the data request: the resource API serves windows longer than 60 days only compressed and returns `400 invalid_request` otherwise
 - Chart consumption as monthly bars and the cumulative reading as a daily line, replacing the half-hourly bars. A year is about 17,500 half-hourly readings, and the API has no granularity parameter, so both series are aggregated client side in `lib/energySeries.ts`. Readings are bucketed on `from`, the interval start — `to` would push each month's last reading into the next month, and `takenAt` has moved to one interval after `to`
 - Axes now carry rounded tick values, gridlines and a unit label; watt hours are shown as kWh, since a month of electricity in WHR runs to seven figures
+- `package.json` carries the release version, `2.3.0`. It sat at `0.1.5` and had not tracked the changelog since before v2.1.0
 
 ### Removed
 
