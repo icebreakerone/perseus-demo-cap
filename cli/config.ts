@@ -36,13 +36,16 @@ const insecureLocalhost = flags.some(flag =>
 )
 
 export const config = {
+  // Discovery reads the metadata from the issuer identifier, which is the
+  // host that takes no client certificate. The mTLS host serves a copy naming
+  // a different issuer, and needs a client certificate to read it at all.
   publicServer: new URL(
     process.env.CLI_PUBLIC_SERVER ??
-      'https://mtls.perseus-demo-authentication.ib1.org', //'https://localhost:8000'
+      'https://preprod.perseus-demo-authentication.ib1.org', //'https://localhost:8000'
   ),
   mTLSAuthorisationServer: new URL(
     process.env.CLI_MTLS_AUTHORISATION_SERVER ??
-      'https://mtls.perseus-demo-authentication.ib1.org',
+      'https://preprod.mtls.perseus-demo-authentication.ib1.org',
   ),
   clientId:
     process.env.CLI_CLIENT_ID ??
@@ -70,6 +73,6 @@ export const config = {
   ),
   mtlsAuthorisationServer: new URL(
     process.env.CLI_MTLS_AUTHORISATION_SERVER ??
-      'https://mtls.perseus-demo-authentication.ib1.org',
+      'https://preprod.mtls.perseus-demo-authentication.ib1.org',
   ),
 }
