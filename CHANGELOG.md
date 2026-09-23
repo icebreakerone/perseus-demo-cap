@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+
+- The CLI discovers the authorization server's metadata from the issuer identifier, `https://preprod.perseus-demo-authentication.ib1.org`, rather than the `mtls.` host. The EDP publishes its metadata under the issuer identifier, which takes no client certificate, and the copy on the `mtls.` host names an issuer other than the host it is served from. `CLI_PUBLIC_SERVER` and the `.env.preprod` settings follow, and `.env.preprod` now points at preprod rather than production throughout
+
 ## [v2.3.0] - 2026-09-09
 
 ### Added

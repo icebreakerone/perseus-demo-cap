@@ -33,7 +33,7 @@ Create a .env.local file in the root of the project with the following content:
 
 ```bash
 SECRET_COOKIE_PASSWORD=<long-secret-string>
-NEXT_PUBLIC_SERVER=https://preprod.mtls.perseus-demo-authentication.ib1.org
+NEXT_PUBLIC_SERVER=https://preprod.perseus-demo-authentication.ib1.org
 NEXT_PUBLIC_CLIENT_ID=<client-id>
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
@@ -223,7 +223,7 @@ An alternative to skipping verification for self signed certificates is to suppl
 Alternatively, to run against the demo apps:
 
 ```
-CLI_PUBLIC_SERVER=https://preprod.mtls.perseus-demo-authentication.ib1.org \
+CLI_PUBLIC_SERVER=https://preprod.perseus-demo-authentication.ib1.org \
 CLI_PROTECTED_RESOURCE_URL=https://preprod.mtls.perseus-demo-energy.ib1.org/ \
 cli get_code.ts
 ```
@@ -231,7 +231,7 @@ cli get_code.ts
 Similarly for the callback server:
 
 ```
-CLI_PUBLIC_SERVER=https://preprod.mtls.perseus-demo-authentication.ib1.org \
+CLI_PUBLIC_SERVER=https://preprod.perseus-demo-authentication.ib1.org \
 CLI_PROTECTED_RESOURCE_URL=https://preprod.mtls.perseus-demo-energy.ib1.org/ \
 cli npx tsx callback_server.ts
 ```
