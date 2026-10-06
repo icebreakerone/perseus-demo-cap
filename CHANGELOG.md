@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [v2.4.0] - 2026-10-06
 
 Realigns the web app and the CLI with v7.0.0 of the demo EDP and authorization server and the IB1 OAuth profile.
 
