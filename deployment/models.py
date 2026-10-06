@@ -6,4 +6,5 @@ class Context(TypedDict):
     domain: str
     hosted_zone_name: str
     auth_domain: str
+    resource_domain: str
     mtls_domain: str

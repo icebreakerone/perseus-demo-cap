@@ -1,11 +1,7 @@
-import { createCustomFetch, getClientConfig, getSession } from '@/lib/auth'
+import { createCustomFetch, getSession } from '@/lib/auth'
 import { getClientConfigPromise } from '@lib/clientConfig'
 import { lastTwelveCompleteMonths } from '@lib/dateRange'
-import { NextRequest, NextResponse } from 'next/server'
-
-type TokenResponse = {
-  access_token?: string
-}
+import { NextResponse } from 'next/server'
 
 // CORS headers configuration
 const corsHeaders = {
@@ -20,77 +16,17 @@ export async function OPTIONS() {
   return NextResponse.json({}, { headers: corsHeaders })
 }
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export async function GET(): Promise<NextResponse> {
   const session = await getSession()
-  const issuer = await getClientConfig()
   const customFetch = await createCustomFetch()
   const clientConfig = await getClientConfigPromise()
 
-  let accessToken = session.access_token
-
-  if (!accessToken) {
-    const url = new URL(request.url)
-    const code = url.searchParams.get('code')
-
-    if (!code)
-      return NextResponse.json(
-        { error: 'Missing access token or authorization code.' },
-        { status: 401, headers: corsHeaders },
-      )
-
-    const tokenEndpoint = issuer.serverMetadata().token_endpoint
-
-    if (!tokenEndpoint)
-      return NextResponse.json(
-        { error: 'Token endpoint is not available in the issuer metadata.' },
-        { status: 500, headers: corsHeaders },
-      )
-
-    const body = new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: clientConfig.redirect_uri,
-      client_id: clientConfig.client_id,
-      code_verifier: session.code_verifier || '',
-    }).toString()
-
-    const tokenResponse = await customFetch(tokenEndpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body,
-    })
-
-    if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text()
-      return NextResponse.json(
-        {
-          error: 'Token request failed',
-          details: errorText,
-        },
-        { status: 500, headers: corsHeaders },
-      )
-    }
-    console.log(
-      'API > getData # Token response status ok:',
-      tokenResponse.status,
-      tokenResponse.statusText,
+  const accessToken = session.access_token
+  if (!accessToken)
+    return NextResponse.json(
+      { error: 'Not logged in' },
+      { status: 401, headers: corsHeaders },
     )
-
-    const tokenData = (await tokenResponse.json()) as TokenResponse
-    console.log('API > getData # Token response data:', tokenData)
-
-    if (!tokenData.access_token)
-      return NextResponse.json(
-        { error: 'Access token missing from token response.' },
-        { status: 500, headers: corsHeaders },
-      )
-
-    session.access_token = tokenData.access_token
-    session.isLoggedIn = true
-    await session.save()
-
-    accessToken = tokenData.access_token
-  }
 
   console.log('API > getData # Using access token:', accessToken)
 

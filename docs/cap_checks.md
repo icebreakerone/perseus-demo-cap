@@ -15,10 +15,8 @@ CLI_MTLS_KEY_PATH=../certs/cli-test/j4l5deko-client-key.pem # custom key path
 
 # Your public server URL with a .well-known/oauth-authorization-server endpoint
 CLI_PUBLIC_SERVER=https://perseus-demo-authentication.ib1.org
-# mTLS authorisation server URL (for permissions endpoint)
-CLI_MTLS_AUTHORISATION_SERVER=https://mtls.perseus-demo-authentication.ib1.org
-# Your sandbox issued application ID
-CLI_CLIENT_ID=https://directory.core.sandbox.trust.ib1.org/a/j4l5deko
+# Read from the certificate; only needed if it has no Application URL
+# CLI_CLIENT_ID=https://directory.core.sandbox.trust.ib1.org/a/j4l5deko
 # Your protected data endpoint
 CLI_PROTECTED_RESOURCE_URL=https://perseus-demo-energy.ib1.org
 ```
@@ -31,7 +29,7 @@ CLI_PROTECTED_RESOURCE_URL=https://perseus-demo-energy.ib1.org
 
 2. **PKCE setup** — Generate a cryptographically random `code_verifier` and derive `code_challenge` (SHA-256). Persist the verifier for the callback step.
 
-3. **Pushed Authorization Request (PAR)** — POST to `pushed_authorization_request_endpoint` (mTLS) with `client_id`, `redirect_uri`, `response_type`, `scope`, `code_challenge`, `code_challenge_method` as form-urlencoded body. Receive `request_uri` in response.
+3. **Pushed Authorization Request (PAR)** — POST to `pushed_authorization_request_endpoint` (mTLS) with `client_id`, `redirect_uri`, `response_type`, `scope` (a single Registry License URL), `code_challenge`, `code_challenge_method`, `state` as form-urlencoded body. Receive `request_uri` in response.
 
 4. **Authorization redirect** — Build authorization URL with `client_id` and `request_uri` from PAR. Redirect user to `authorization_endpoint`; user authenticates and CAP grants consent.
 
@@ -43,6 +41,6 @@ CLI_PROTECTED_RESOURCE_URL=https://perseus-demo-energy.ib1.org
 
 8. **Fetch meter consumption data** — GET `{protectedResourceUrl}/datasources/{meterId}/{measure}?from=YYYY-MM-DD&to=YYYY-MM-DD` (mTLS) with Bearer token. `from` is inclusive, `to` exclusive; a CAP requests the previous twelve complete calendar months. Readings are always half-hourly — there is no granularity parameter — so a year is about 17,500 points. Windows longer than 60 days are served only compressed, so send `Accept-Encoding: gzip`; windows longer than 396 days are rejected. Expect JSON response with consumption data (and optionally `provenance`).
 
-9. **Permissions verification** — POST `token` (refresh_token) to `/api/v1/permissions` (mTLS) on the authorisation server as form-urlencoded. Must succeed with 200 and valid JSON to confirm CAP has granted the expected permissions.
+9. **Permissions verification** — POST `token` (refresh_token) to the `ib1_permission_endpoint` from the authorisation server metadata (mTLS) as form-urlencoded. Must succeed with 200 and valid JSON to confirm CAP has granted the expected permissions.
 
 
