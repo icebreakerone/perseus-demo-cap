@@ -1,4 +1,5 @@
-import * as client from 'openid-client'
+// Relative, not '@lib/...': the CLI does not use the root path aliases
+import { discover, mtlsEndpoint } from '../lib/discovery'
 import { clientConfig as clientConfigPromise, customFetch } from './customFetch'
 import { positionalArgs } from './config'
 
@@ -17,35 +18,15 @@ const resolvedClientConfig = await clientConfigPromise
 console.log('--------------------------------')
 console.log('🔄 Refreshing access token')
 
-const discoveryUrl = new URL(
-  '/.well-known/oauth-authorization-server',
+console.log(`Discovering ${resolvedClientConfig.server.href}`)
+const issuer = await discover(
   resolvedClientConfig.server,
+  resolvedClientConfig.client_id,
+  customFetch,
 )
-console.log(`Loading ${discoveryUrl.href}`)
-
-const originalFetch = globalThis.fetch
-let issuer: client.Configuration
-try {
-  globalThis.fetch = customFetch as typeof fetch
-  issuer = await client.discovery(
-    discoveryUrl,
-    resolvedClientConfig.client_id,
-    { use_mtls_endpoint_aliases: true },
-    client.TlsClientAuth(),
-    { [client.customFetch]: customFetch },
-  )
-} finally {
-  globalThis.fetch = originalFetch
-}
-
 console.log('✅ Discovery successful')
 
-const tokenEndpoint = issuer.serverMetadata().token_endpoint
-
-if (!tokenEndpoint) {
-  console.error('Token endpoint is not available in the issuer metadata.')
-  process.exit(1)
-}
+const tokenEndpoint = mtlsEndpoint(issuer, 'token_endpoint')
 
 console.log(`Token endpoint: ${tokenEndpoint}`)
 

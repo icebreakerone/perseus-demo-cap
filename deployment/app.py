@@ -42,6 +42,7 @@ contexts: dict[str, Context] = {
         "domain": "preprod.perseus-demo-cap.ib1.org",
         "hosted_zone_name": "perseus-demo-cap.ib1.org",
         "auth_domain": "preprod.perseus-demo-authentication.ib1.org",
+        "resource_domain": "preprod.mtls.perseus-demo-energy.ib1.org",
         "mtls_domain": "preprod.mtls.perseus-demo-cap.ib1.org",
     },
     "prod": {
@@ -49,6 +50,7 @@ contexts: dict[str, Context] = {
         "domain": "perseus-demo-cap.ib1.org",
         "hosted_zone_name": "perseus-demo-cap.ib1.org",
         "auth_domain": "perseus-demo-authentication.ib1.org",
+        "resource_domain": "mtls.perseus-demo-energy.ib1.org",
         "mtls_domain": "mtls.perseus-demo-cap.ib1.org",
     },
 }
@@ -131,8 +133,8 @@ nextjs_service = NextJsService(
     environment={
         "NEXT_PUBLIC_APP_URL": f"https://{contexts[deployment_context]["domain"]}",
         "NEXT_PUBLIC_REDIRECT_URL": f"https://{contexts[deployment_context]["domain"]}?key=edpVerified",
-        "NEXT_PUBLIC_CLIENT_ID": "f67916ce-de33-4e2f-a8e3-cbd5f6459c30",
         "NEXT_PUBLIC_SERVER": f"https://{contexts[deployment_context]['auth_domain']}",
+        "NEXT_PUBLIC_PROTECTED_RESOURCE_URL": f"https://{contexts[deployment_context]['resource_domain']}",
         "PROVENANCE_SERVICE_URL": f"http://provenance-service.perseus-cap-{contexts[deployment_context]['environment_name']}.local:8080",
         "APP_ENV": deployment_context,
         "NODE_ENV": "production",

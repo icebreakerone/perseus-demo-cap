@@ -1,5 +1,4 @@
 import express from 'express'
-import * as client from 'openid-client'
 import { readFileSync } from 'fs'
 
 import { clientConfig as clientConfigPromise, customFetch } from './customFetch'
@@ -7,52 +6,56 @@ import { config } from './config'
 // Relative, not '@lib/...': the CLI is a standalone package and does not use
 // the root tsconfig's path aliases.
 import { lastTwelveCompleteMonths } from '../lib/dateRange'
+import {
+  checkAuthorizationResponse,
+  discover,
+  mtlsEndpoint,
+} from '../lib/discovery'
 
 const app = express()
 const port = 3000
 
 app.get('/callback', async (req, res) => {
-  const authorizationCode = req.query.code as string
-  if (!authorizationCode)
-    return res.status(400).send('Missing authorization code.')
-
-  let codeVerifier
+  let codeVerifier: string
+  let state: string
   try {
     codeVerifier = readFileSync('code_verifier.txt', 'utf8')
+    state = readFileSync('state.txt', 'utf8')
   } catch (err) {
-    return res.status(500).send('Failed to read code_verifier from file.')
+    return res
+      .status(500)
+      .send(
+        'Failed to read code_verifier.txt or state.txt; run get_code first.',
+      )
   }
-
-  console.log('--------------------------------')
-  console.log('✅ Authorization code received')
 
   const resolvedClientConfig = await clientConfigPromise
 
-  const originalFetch = globalThis.fetch
-  let issuer: client.Configuration
+  let issuer: Awaited<ReturnType<typeof discover>>
+  let authorizationCode: string
   try {
-    globalThis.fetch = customFetch as typeof fetch
-    issuer = await client.discovery(
-      new URL(
-        '/.well-known/oauth-authorization-server',
-        resolvedClientConfig.server,
-      ),
+    issuer = await discover(
+      resolvedClientConfig.server,
       resolvedClientConfig.client_id,
-      { use_mtls_endpoint_aliases: true },
-      client.TlsClientAuth(),
-      { [client.customFetch]: customFetch },
+      customFetch,
     )
-  } finally {
-    globalThis.fetch = originalFetch
-  }
-  console.log('✅ Discovery successful')
-
-  const tokenEndpoint = issuer.serverMetadata().token_endpoint
-
-  if (!tokenEndpoint)
+    console.log('✅ Discovery successful')
+    authorizationCode = checkAuthorizationResponse(
+      new URL(req.originalUrl, `http://${req.headers.host}`).searchParams,
+      issuer,
+      state,
+    )
+  } catch (error) {
+    console.error(error)
     return res
-      .status(500)
-      .send('Token endpoint is not available in the issuer metadata.')
+      .status(400)
+      .send(error instanceof Error ? error.message : 'Invalid callback')
+  }
+
+  console.log('--------------------------------')
+  console.log('✅ Authorization code received; state and iss checked')
+
+  const tokenEndpoint = mtlsEndpoint(issuer, 'token_endpoint')
 
   console.log('🔄 Exchanging authorization code for access token')
   console.log(`Token endpoint: ${tokenEndpoint}`)
@@ -231,17 +234,15 @@ app.get('/callback', async (req, res) => {
       token: tokenData.refresh_token,
     })
 
-    console.log('Requesting permissions from:', config.mtlsAuthorisationServer)
-    const permissionsResponse = await customFetch(
-      new URL('/api/v1/permissions', config.mtlsAuthorisationServer),
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: permissionsBody.toString(),
+    const permissionEndpoint = mtlsEndpoint(issuer, 'ib1_permission_endpoint')
+    console.log('Requesting permissions from:', permissionEndpoint)
+    const permissionsResponse = await customFetch(permissionEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-    )
+      body: permissionsBody.toString(),
+    })
 
     if (!permissionsResponse.ok) {
       const errorText = await permissionsResponse.text()
@@ -252,7 +253,11 @@ app.get('/callback', async (req, res) => {
     }
 
     const permissionsData = await permissionsResponse.json()
-    console.log('✅ Permissions verified')
+    // The Permission Records spec wraps the record in `permission`; the demo
+    // authorization server currently uses `permissions`
+    const permission = permissionsData.permission ?? permissionsData.permissions
+    console.log('✅ Permission record received')
+    console.log(JSON.stringify(permission, null, 2))
     console.log('--------------------------------')
     console.log('✅ All steps completed successfully')
     console.log('--------------------------------')

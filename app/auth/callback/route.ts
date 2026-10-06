@@ -4,6 +4,7 @@ import {
   getSession,
   initializeClientConfig,
 } from '@/lib/auth'
+import { checkAuthorizationResponse, mtlsEndpoint } from '@lib/discovery'
 import { NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest): Promise<Response> {
@@ -13,17 +14,17 @@ export async function GET(request: NextRequest): Promise<Response> {
   const clientConfig = await initializeClientConfig()
 
   try {
-    // Get the authorization code from the URL
-    const url = new URL(request.url)
-    const code = url.searchParams.get('code')
-
-    if (!code) throw new Error('No authorization code received')
+    const code = checkAuthorizationResponse(
+      new URL(request.url).searchParams,
+      issuer,
+      session.state,
+    )
+    // One use only, like the code it guards
+    session.state = undefined
 
     console.log('Exchanging code for tokens using mTLS...')
-    const tokenEndpoint = issuer.serverMetadata().token_endpoint
+    const tokenEndpoint = mtlsEndpoint(issuer, 'token_endpoint')
     console.log('Token endpoint:', tokenEndpoint)
-
-    if (!tokenEndpoint) throw new Error('No token endpoint in discovery')
 
     const body = new URLSearchParams({
       grant_type: 'authorization_code',

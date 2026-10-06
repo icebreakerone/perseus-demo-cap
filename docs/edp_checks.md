@@ -15,10 +15,8 @@ CLI_MTLS_KEY_PATH=../certs/cli-test/j4l5deko-client-key.pem # custom key path
 
 # Your public server URL with a .well-known/oauth-authorization-server endpoint
 CLI_PUBLIC_SERVER=<EDP public authorisation server URL>
-# mTLS authorisation server URL (for permissions endpoint)
-CLI_MTLS_AUTHORISATION_SERVER=<mTLS EDP authorisation server URL>
-# Your sandbox issued application ID
-CLI_CLIENT_ID=<your directory issued client id eg. https://directory.core.sandbox.trust.ib1.org/a/j4l5deko >
+# Read from the certificate; only needed if it has no Application URL
+# CLI_CLIENT_ID=<your directory issued client id eg. https://directory.core.sandbox.trust.ib1.org/a/j4l5deko >
 # Your protected data endpoint
 CLI_PROTECTED_RESOURCE_URL=<EDP protected resource URL with meter listing and energy data endpoints>
 ```
@@ -115,9 +113,9 @@ Meter catalog URL: https://mtls.perseus-demo-energy.ib1.org//datasources/
 [mTLS] Making request to: https://mtls.perseus-demo-energy.ib1.org/datasources/S018011012261305588165/import?from=2025-09-01&to=2026-09-01
 ✅ Meter data received (17520 readings; the response body below is several MB)
 🔍 Testing permissions with refresh token
-Requesting permissions from: https://mtls.perseus-demo-authentication.ib1.org/
+Requesting permissions from: https://mtls.perseus-demo-authentication.ib1.org/api/v1/permissions
 [mTLS] Making request to: https://mtls.perseus-demo-authentication.ib1.org/api/v1/permissions
-✅ Permissions verified
+✅ Permission record received
 --------------------------------
 ✅ All steps completed successfully
 --------------------------------

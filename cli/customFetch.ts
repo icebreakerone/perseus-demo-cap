@@ -23,11 +23,7 @@ const serverCaBundle = (() => {
 // --insecure only covers loopback hosts, so warn rather than fail silently when
 // it is passed for a deployment that is not local.
 if (config.insecureLocalhost && config.insecureHosts) {
-  const targets = [
-    config.publicServer,
-    config.mTLSAuthorisationServer,
-    config.protectedResourceUrl,
-  ]
+  const targets = [config.publicServer, config.protectedResourceUrl]
   if (!targets.some(url => config.insecureHosts!.includes(url.hostname)))
     console.warn(
       '⚠️  --insecure was given but no configured server is on localhost; certificates will still be verified.',
