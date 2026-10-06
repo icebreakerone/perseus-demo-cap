@@ -36,17 +36,17 @@ const insecureLocalhost = flags.some(flag =>
 )
 
 export const config = {
+  // Discovery reads the metadata from the issuer identifier, which is the
+  // host that takes no client certificate. The mTLS host serves a copy naming
+  // a different issuer, and needs a client certificate to read it at all.
   publicServer: new URL(
     process.env.CLI_PUBLIC_SERVER ??
-      'https://mtls.perseus-demo-authentication.ib1.org', //'https://localhost:8000'
+      'https://preprod.perseus-demo-authentication.ib1.org', //'https://localhost:8000'
   ),
-  mTLSAuthorisationServer: new URL(
-    process.env.CLI_MTLS_AUTHORISATION_SERVER ??
-      'https://mtls.perseus-demo-authentication.ib1.org',
-  ),
-  clientId:
-    process.env.CLI_CLIENT_ID ??
-    'https://directory.core.sandbox.trust.ib1.org/a/s2914npr',
+  // Only used when the certificate carries no Application URL; the client_id
+  // is otherwise read from the certificate, which the servers require it to
+  // match.
+  clientId: process.env.CLI_CLIENT_ID,
   redirectUri: process.env.CLI_REDIRECT_URI ?? 'http://localhost:3000/callback',
   postLoginRedirect:
     process.env.CLI_POST_LOGIN_REDIRECT ?? 'http://localhost:3000/callback',
@@ -67,9 +67,5 @@ export const config = {
   ),
   provenanceServiceUrl: new URL(
     process.env.CLI_PROVENANCE_SERVICE_URL ?? 'http://localhost:8081',
-  ),
-  mtlsAuthorisationServer: new URL(
-    process.env.CLI_MTLS_AUTHORISATION_SERVER ??
-      'https://mtls.perseus-demo-authentication.ib1.org',
   ),
 }

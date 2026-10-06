@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+Realigns the web app and the CLI with v7.0.0 of the demo EDP and authorization server and the IB1 OAuth profile.
+
+### Changed
+
+- The `client_id` is the Application URL in the client certificate's subject alternative name, not a configured value. The authorization and resource servers identify the client by that URL and the profile requires the `client_id` to match it. The web app had been sending the Ory project's own client UUID, which the server ignored, so the demo only worked because nothing checked. `NEXT_PUBLIC_CLIENT_ID` and `CLI_CLIENT_ID` remain as a fallback for a certificate with no Application URL, and a configured value that disagrees with the certificate is logged and overridden
+- Discovery passes the issuer identifier to openid-client with `algorithm: 'oauth2'` rather than the `/.well-known/` URL. Given the metadata URL directly, openid-client skips its check that the metadata names the expected issuer; the server publishes only RFC 8414 metadata, with no `openid-configuration`. The four copies of discovery (the web app, and the CLI's `get_code`, `callback_server` and `refresh_token`) share `lib/discovery.ts`
+- PAR, token and permission requests use the endpoints under `mtls_endpoint_aliases`, as the profile publishes them, falling back to the top level values
+- The PAR request sends a random `state`, and the callback rejects a response whose `state` does not match or whose `iss` is not the discovered issuer (RFC 9207, which the server advertises). An `error` in the redirect is now reported as such rather than as a missing code
+- The CLI requests the Permission Record from the `ib1_permission_endpoint` in the metadata, which v7 renamed from `permissions_endpoint`, instead of a hardcoded path on a separately configured host, and prints the record. It accepts the record under `permission`, as the Permission Records specification has it, or `permissions`, as the demo server currently returns it
+- The deployed web app reads meter data from the EDP for its own environment. `NEXT_PUBLIC_PROTECTED_RESOURCE_URL` was never set in the CDK stack, so production fell back to the preprod EDP
+- The message endpoint's README example uses the message format of the Message Delivery specification
+
+### Fixed
+
+- The OAuth scope is the license URL alone. It was sent as `<license>+offline_access`; the v7 authorization server splits the scope on whitespace and no longer turns `+` into a space, so the license became `…/2026-03-12+offline_access`, which the Ory client does not allow and which would not match the scheme's license prefix. The server now asks for `offline_access` itself
+- `.gitignore` lost its newline between `cli/code_verifier.txt` and `!/.env.local.tmpl`, so the CLI's code verifier was not ignored
+- The CLI discovers the authorization server's metadata from the issuer identifier, `https://preprod.perseus-demo-authentication.ib1.org`, rather than the `mtls.` host. The EDP publishes its metadata under the issuer identifier, which takes no client certificate, and the copy on the `mtls.` host names an issuer other than the host it is served from. `CLI_PUBLIC_SERVER` and the `.env.preprod` settings follow, and `.env.preprod` now points at preprod rather than production throughout
+
+### Removed
+
+- The code exchange in `/api/getData`. It exchanged a `code` query parameter when the session had no token, bypassing the callback's checks, and nothing called it that way
+- `CLI_MTLS_AUTHORISATION_SERVER`, and the two config fields that duplicated it, now that the permission endpoint comes from the metadata
+- Unused settings from the `.env` files: `NEXT_PUBLIC_SCOPE`, `NEXT_PUBLIC_API_URL` and the `NEXT_PUBLIC_*_PATH` certificate paths. The resource URLs lose the `/consumptions/any/thing` path the EDP no longer serves; only the origin was ever used
+
 ## [v2.3.0] - 2026-09-09
 
 ### Added

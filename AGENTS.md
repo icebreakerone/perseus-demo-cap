@@ -121,9 +121,18 @@ and defaults to `dev` if omitted.
 4. `/auth/callback` - Receives the authorization code, exchanges it for a token via mTLS
 5. Access token stored in an iron-session encrypted cookie
 
-The OAuth scope is a Registry License URL, not a bare scope string
-(see `lib/clientConfig.ts`); the Ory client registration must list whichever
-license version the code requests.
+The OAuth scope is exactly one Registry License URL and nothing else
+(see `lib/clientConfig.ts`); the auth server adds `offline_access` itself, and
+the Ory client registration must list whichever license version the code requests.
+
+Discovery, the mTLS endpoint lookup and the authorization response checks
+(`state`, `iss`) live in `lib/discovery.ts`, shared by the web app and the CLI.
+Discovery is from the issuer identifier (RFC 8414, `algorithm: 'oauth2'`) so the
+metadata's `issuer` is checked; the server has no `openid-configuration`.
+Server-to-server endpoints, including `ib1_permission_endpoint`, are read from
+`mtls_endpoint_aliases`. The `client_id` is the Application URL in the client
+certificate's SAN (`resolveClientId` in `lib/clientConfig.ts`); the servers
+require the two to match.
 
 ### Routes
 - `app/auth/login`, `app/auth/callback`, `app/auth/logout` - OAuth flow
@@ -189,7 +198,7 @@ the directory as ESM so `tsx` can load it from the CLI.
 ```
 SECRET_COOKIE_PASSWORD=<session-encryption-key>   # from Secrets Manager when deployed
 NEXT_PUBLIC_SERVER=<oauth-issuer-url>             # non-mTLS URL, for discovery
-NEXT_PUBLIC_CLIENT_ID=<client-id>                 # directory entry URL
+NEXT_PUBLIC_CLIENT_ID=<client-id>                 # optional; only if the cert has no Application URL
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_PROTECTED_RESOURCE_URL=<resource-endpoint>
 APP_ENV=local                                     # or ENVIRONMENT; selects the cert source
@@ -201,8 +210,7 @@ See `.env.local.tmpl`.
 ### CLI (cli/.env)
 ```
 CLI_PUBLIC_SERVER=<auth-server-url>
-CLI_MTLS_AUTHORISATION_SERVER=<mtls-auth-server>
-CLI_CLIENT_ID=<client-id>
+CLI_CLIENT_ID=<client-id>                  # optional; read from the cert
 CLI_REDIRECT_URI=http://localhost:3000/callback
 CLI_POST_LOGIN_REDIRECT=http://localhost:3000/callback
 CLI_PROTECTED_RESOURCE_URL=<resource-endpoint>

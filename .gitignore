@@ -44,4 +44,6 @@ next-env.d.ts
 .mypy_cache
 deployment/cdk.context.json
 
-cli/code_verifier.txt!/.env.local.tmpl
+cli/code_verifier.txt
+cli/state.txt
+!/.env.local.tmpl

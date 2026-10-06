@@ -137,25 +137,25 @@ export const initializeClientConfig = async (
       process.env.NEXT_PUBLIC_SERVER ||
         'https://preprod.perseus-demo-authentication.ib1.org', // Must be non-mTLS URL for OAuth discovery
     ),
-    client_id: process.env.NEXT_PUBLIC_CLIENT_ID as string,
+    // Fallback only; see resolveClientId
+    client_id: process.env.NEXT_PUBLIC_CLIENT_ID ?? '',
     redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
     mtlsKey: certificates.mtlsKey,
     mtlsBundle: certificates.mtlsBundle,
     caBundle: certificates.caBundle,
-    // Per the IB1 OAuth profile the scope is a Registry License URL, so it
-    // changes whenever the Registry publishes a new version of the license, and
-    // the Ory client registration must list the version requested here.
+    // Per the IB1 OAuth profile the scope is one Registry License URL and
+    // nothing else, so it changes whenever the Registry publishes a new
+    // version of the license, and the Ory client registration must list the
+    // version requested here. The authorization server asks for the
+    // offline_access a refresh token needs itself; appending it here makes the
+    // scope a second, unrecognised value.
     //
     // This demo takes consent for the EDP, the CAP and the FSP in one
     // permission, so it requests the pass through license rather than
     // energy-consumption-edp-cap, which covers only the EDP to CAP leg. Both
     // are valid for the energy consumption data API.
-    //
-    // The `+` separates the two scopes: URLSearchParams encodes it as %2B, and
-    // the authorization server decodes it back to a space when forwarding to
-    // Hydra. Do not replace it with a literal space without changing that too.
     scope:
-      'https://registry.core.sandbox.trust.ib1.org/scheme/perseus/license/energy-consumption-emissions-edp-cap-fsp/2026-03-12+offline_access',
+      'https://registry.core.sandbox.trust.ib1.org/scheme/perseus/license/energy-consumption-emissions-edp-cap-fsp/2026-03-12',
     response_type: 'code',
     grant_type: 'authorization_code',
     post_login_route: process.env.NEXT_PUBLIC_REDIRECT_URL as string,
@@ -171,7 +171,7 @@ export const initializeClientConfig = async (
     skipServerVerification: false,
   }
 
-  return {
+  const merged = {
     ...baseConfig,
     ...overrides,
     mtlsKey: overrides?.mtlsKey ?? baseConfig.mtlsKey,
@@ -180,6 +180,40 @@ export const initializeClientConfig = async (
     skipServerVerification:
       overrides?.skipServerVerification ?? baseConfig.skipServerVerification,
   }
+
+  return { ...merged, client_id: resolveClientId(merged) }
+}
+
+// The authorization and resource servers identify the client by the
+// Application URL in its certificate and require the client_id to match it,
+// so the certificate is the source of truth. A configured value is only used
+// when the certificate carries no Application URL.
+const resolveClientId = (config: IClientConfig): string => {
+  const configured = config.client_id || undefined
+  let application: string | undefined
+  try {
+    const leaf = config.mtlsBundle.match(
+      /-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/,
+    )
+    if (leaf) application = decodeApplication(new x509.X509Certificate(leaf[0]))
+  } catch (e) {
+    console.warn(
+      `Could not read the Application URL from the certificate: ${e}`,
+    )
+  }
+
+  if (application && configured && configured !== application)
+    console.warn(
+      `Configured client_id ${configured} differs from the certificate's Application ${application}; using the certificate`,
+    )
+
+  const clientId = application ?? configured
+  if (!clientId)
+    throw new Error(
+      'No client_id: the certificate has no Application URL and none is configured',
+    )
+  console.log('client_id:', clientId)
+  return clientId
 }
 
 let clientConfigPromise: Promise<IClientConfig> | null = null

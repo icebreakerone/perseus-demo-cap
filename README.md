@@ -33,10 +33,11 @@ Create a .env.local file in the root of the project with the following content:
 
 ```bash
 SECRET_COOKIE_PASSWORD=<long-secret-string>
-NEXT_PUBLIC_SERVER=https://preprod.mtls.perseus-demo-authentication.ib1.org
-NEXT_PUBLIC_CLIENT_ID=<client-id>
+NEXT_PUBLIC_SERVER=https://preprod.perseus-demo-authentication.ib1.org
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
+
+The OAuth `client_id` is the Application URL in the client certificate's subject alternative name, which the authorization and resource servers require it to match, so it is not configured.
 
 First, run the development server:
 
@@ -83,7 +84,7 @@ Send a test message:
 curl -X POST http://localhost:3000/perseus/messages \
   -H "Content-Type: application/json" \
   -H "X-Amzn-Mtls-Clientcert-Leaf: $ENCODED_CERT" \
-  -d '{"ib1:message": "urn:ib1:zeus:event:token-revocation", "token_id": "abc123"}'
+  -d '{"ib1:message": "https://registry.core.sandbox.trust.ib1.org/trust-framework", "subject": "https://registry.trust.ib1.org/message/withdrawal-of-permission/2025-03-16", "body": {"token": "abc123"}}'
 ```
 
 Test without a certificate (expects 403):
@@ -91,7 +92,7 @@ Test without a certificate (expects 403):
 ```bash
 curl -X POST http://localhost:3000/perseus/messages \
   -H "Content-Type: application/json" \
-  -d '{"ib1:message": "urn:ib1:zeus:event:token-revocation"}'
+  -d '{"ib1:message": "https://registry.core.sandbox.trust.ib1.org/trust-framework"}'
 ```
 
 ## Certificates and keys
@@ -175,12 +176,13 @@ The CLI reads its configuration from `cli/config.ts`. Every value can also be ov
 | Environment Variable | Description | Default |
 | -------------------- | ----------- | ------- |
 | `CLI_PUBLIC_SERVER` | OAuth issuer URL (non-mTLS discovery endpoint) | `https://preprod.perseus-demo-authentication.ib1.org` |
-| `CLI_PROTECTED_RESOURCE_URL` | Resource URL to fetch after obtaining a token | `https://preprod.mtls.perseus-demo-energy.ib1.org/datasources/id/measure?...` |
+| `CLI_PROTECTED_RESOURCE_URL` | Resource URL to fetch after obtaining a token | `https://preprod.mtls.perseus-demo-energy.ib1.org` |
 | `CLI_MTLS_KEY_PATH` | Path to the client private key | `../certs/cap-demo-certs/cap-demo-key.pem` |
 | `CLI_MTLS_BUNDLE_PATH` | Path to the client certificate bundle (leaf + intermediate) | `../certs/cap-demo-certs/cap-demo-bundle.pem` |
 | `CLI_SERVER_CA_PATH` | Optional CA bundle to trust for server verification | unset |
 | `CLI_SKIP_SERVER_VERIFICATION` | If set to `true`, disables server certificate verification (useful for local self-signed certs) | `false` |
-| `CLI_CLIENT_ID` / `CLI_REDIRECT_URI` | OAuth client credentials | defaults in `config.ts` |
+| `CLI_CLIENT_ID` | Fallback `client_id`, used only when the certificate has no Application URL | unset |
+| `CLI_REDIRECT_URI` | OAuth redirect URI | `http://localhost:3000/callback` |
 
 ### Running against local environments
 
@@ -223,7 +225,7 @@ An alternative to skipping verification for self signed certificates is to suppl
 Alternatively, to run against the demo apps:
 
 ```
-CLI_PUBLIC_SERVER=https://preprod.mtls.perseus-demo-authentication.ib1.org \
+CLI_PUBLIC_SERVER=https://preprod.perseus-demo-authentication.ib1.org \
 CLI_PROTECTED_RESOURCE_URL=https://preprod.mtls.perseus-demo-energy.ib1.org/ \
 cli get_code.ts
 ```
@@ -231,7 +233,7 @@ cli get_code.ts
 Similarly for the callback server:
 
 ```
-CLI_PUBLIC_SERVER=https://preprod.mtls.perseus-demo-authentication.ib1.org \
+CLI_PUBLIC_SERVER=https://preprod.perseus-demo-authentication.ib1.org \
 CLI_PROTECTED_RESOURCE_URL=https://preprod.mtls.perseus-demo-energy.ib1.org/ \
 cli npx tsx callback_server.ts
 ```

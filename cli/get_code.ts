@@ -1,38 +1,31 @@
 import { writeFileSync } from 'fs'
 import * as client from 'openid-client'
+// Relative, not '@lib/...': the CLI does not use the root path aliases
+import { discover, mtlsEndpoint } from '../lib/discovery'
 import { clientConfig as clientConfigPromise, customFetch } from './customFetch'
 
 const resolvedClientConfig = await clientConfigPromise
 
-const discoveryUrl = new URL(
-  '/.well-known/oauth-authorization-server',
-  resolvedClientConfig.server,
-)
 console.log('--------------------------------')
-console.log(`Loading ${discoveryUrl.href}`)
-const originalFetch = globalThis.fetch
-let issuer: client.Configuration
-try {
-  globalThis.fetch = customFetch as typeof fetch
-  issuer = await client.discovery(
-    discoveryUrl,
-    resolvedClientConfig.client_id,
-    { use_mtls_endpoint_aliases: true },
-    client.TlsClientAuth(),
-    { [client.customFetch]: customFetch },
-  )
-} finally {
-  globalThis.fetch = originalFetch
-}
-
+console.log(`Discovering ${resolvedClientConfig.server.href}`)
+const issuer = await discover(
+  resolvedClientConfig.server,
+  resolvedClientConfig.client_id,
+  customFetch,
+)
 console.log(`✅ Discovery successful`)
 
 const code_verifier = client.randomPKCECodeVerifier()
 const code_challenge = await client.calculatePKCECodeChallenge(code_verifier)
+const state = client.randomState()
 
-// In production this would be persisted securely. For the CLI we store it locally for the callback step.
+// In production these would be persisted securely. For the CLI they are stored
+// locally for the callback step.
 writeFileSync('code_verifier.txt', code_verifier)
-console.log(`✅ Code verifier written to code_verifier.txt`)
+writeFileSync('state.txt', state)
+console.log(
+  `✅ Code verifier and state written to code_verifier.txt and state.txt`,
+)
 const parameters: Record<string, string> = {
   client_id: resolvedClientConfig.client_id,
   redirect_uri: resolvedClientConfig.redirect_uri,
@@ -40,11 +33,13 @@ const parameters: Record<string, string> = {
   scope: resolvedClientConfig.scope,
   code_challenge,
   code_challenge_method: resolvedClientConfig.code_challenge_method,
+  state,
 }
 
-const parEndpoint =
-  issuer.serverMetadata().pushed_authorization_request_endpoint
-if (!parEndpoint) throw new Error('Authorization endpoint is undefined')
+const parEndpoint = mtlsEndpoint(
+  issuer,
+  'pushed_authorization_request_endpoint',
+)
 console.log(`Sending PAR request to ${parEndpoint}`)
 const parResponse = await customFetch(parEndpoint, {
   method: 'POST',
